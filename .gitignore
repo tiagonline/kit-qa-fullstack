@@ -1,0 +1,72 @@
+# ----------------------
+# Dependências & Sistema
+# ----------------------
+node_modules/
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ----------------------
+# Segurança & Ambiente
+# ----------------------
+.env
+.env.*local
+.env.test
+envs/.env.*
+!envs/.env.example
+
+# ----------------------
+# Playwright
+# ----------------------
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# ----------------------
+# Cucumber & Relatórios Gerais
+# ----------------------
+cucumber-report.html
+junit-report.xml
+
+# ----------------------
+# K6 (Performance)
+# ----------------------
+# Ignora a pasta de build gerada pelo Webpack
+tests/k6-load/dist/
+
+# Ignora o relatório de sumário
+k6-summary.json
+
+# Se você gerar outros logs do InfluxDB ou Docker
+*.log
+
+# ----------------------
+# Postman / Newman
+# ----------------------
+newman/
+newman-report.html
+
+# ----------------------
+# Scripts Temporários
+# ----------------------
+get-docker.sh
+
+# ----------------------
+# IDEs
+# ----------------------
+.vscode/
+.idea/
+# --- Allure Reports & Artifacts ---
+allure-results/
+allure-report/
+cucumber-report.html
+
+# --- Playwright Artifacts ---
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

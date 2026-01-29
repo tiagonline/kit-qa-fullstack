@@ -1,0 +1,152 @@
+name: workflow-pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+# Permissões para o bot publicar no GitHub Pages
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  # --- JOB 1: API TESTS ---
+  api-tests:
+    name: API Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Run API Tests
+        run: npm run test:api
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-report
+          path: playwright-report/
+
+  # --- JOB 2: E2E TESTS (CUCUMBER + ALLURE) ---
+  e2e-tests:
+    name: E2E Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Necessário para o Allure gerar o HTML
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      
+      - name: Run E2E Tests
+        # Roda os testes e gera os JSONs na pasta allure-results
+        run: npm run test:e2e
+        continue-on-error: true # Garante relatório mesmo com falha nos testes
+        env:
+          SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
+          SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
+      
+      # 1. Tenta baixar o histórico da execução anterior (se existir)
+      - name: Get Allure history
+        uses: actions/checkout@v4
+        if: always()
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      # 2. Gera o site estático do relatório
+      - name: Allure Report Action
+        uses: simple-elf/allure-report-action@master
+        if: always()
+        with:
+          allure_results: allure-results
+          allure_history: allure-history
+          keep_reports: 20
+
+      # 3. Publica no GitHub Pages
+      - name: Deploy report to Github Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
+
+      # Backup do relatório simples (opcional)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cucumber-report-backup
+          path: cucumber-report.html
+
+  # --- JOB 3: MOBILE TESTS ---
+  mobile-tests:
+    name: Mobile Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      - name: Run Mobile Tests
+        run: npm run test:mobile
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-report
+          path: playwright-report/
+
+  # --- JOB 4: LOAD TESTS (K6) ---
+  load-tests:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm ci
+      
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+      
+      - name: Start Docker & Run Load Tests
+        run: |
+          docker compose -f tests/k6-load/docker-compose.yml up -d influxdb grafana
+          npm run k6:ci -- --summary-export=k6-summary.json
+        env:
+          K6_BASE_URL: ${{ secrets.K6_BASE_URL }}
+      
+      - name: Stop Docker
+        if: always()
+        run: npm run k6:down
+        
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-report
+          path: k6-summary.json

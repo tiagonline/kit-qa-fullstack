@@ -1,0 +1,22 @@
+//Tive quer criar este arquivo para permitir a importação de arquivos .ts no ts-node
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    
+    // Permite importar arquivos terminando em .ts
+    "allowImportingTsExtensions": true,
+    // Garante que o ts-node rode em memória sem tentar criar arquivos .js físicos
+    "noEmit": true,
+
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  },
+  "include": ["**/*.ts", "cucumber.js"],
+  "exclude": ["node_modules"]
+}
