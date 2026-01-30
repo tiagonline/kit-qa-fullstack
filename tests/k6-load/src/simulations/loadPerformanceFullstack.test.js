@@ -1,18 +1,17 @@
 import { group } from "k6";
 import getRequest from "../requests/getRequest";
 import postRequest from "../requests/postRequest";
+import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
 
 export let options = {
-  // Configuração 500 usuários por 5 minutos
   stages: [
-    { duration: "30s", target: 200 }, // Rampa de subida
-    { duration: "1m", target: 500 }, // Mantém 500 usuários por 5 minutos (Requisito)
-    { duration: "30s", target: 0 },   // Rampa de descida
+    { duration: "1m", target: 500 },
+    { duration: "5m", target: 500 },
+    { duration: "1m", target: 0 },
   ],
   thresholds: {
-    http_req_duration: ["p(95)<2000"], // 95% das requisições abaixo de 2s
-    // Aumentei a tolerância de erro para 10% pois httpbin pode falhou anteriormente com essa carga
-    http_req_failed: ["rate<0.10"],    
+    http_req_duration: ["p(95)<2000"],
+    http_req_failed: ["rate<0.10"],
   },
 };
 
@@ -20,11 +19,18 @@ export default function () {
   let getParams = new getRequest();
   let postParams = new postRequest();
 
-  group("GET - Consulta Geral", () => {
+  group("Fluxo: Consulta Geral (GET)", () => {
     getParams.get();
   });
 
-  group("POST - Criação de Dados", () => {
+  group("Fluxo: Criação de Dados (POST)", () => {
     postParams.post();
   });
+}
+
+export function handleSummary(data) {
+  return {
+    "report.html": htmlReport(data), 
+    "k6-summary.json": JSON.stringify(data),
+  };
 }

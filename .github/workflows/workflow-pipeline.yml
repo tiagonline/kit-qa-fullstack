@@ -37,7 +37,7 @@ jobs:
   # JOB 2: E2E TESTS & REPORT (Bolinha 2 + Link do Allure)
   # ------------------------------------------------------------------
   e2e-tests:
-    name: E2E w/ accessibility
+    name: E2E w/ a11y
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -124,7 +124,7 @@ jobs:
           path: playwright-report/
 
   # ------------------------------------------------------------------
-  # JOB 4: LOAD TESTS (Bolinha 4)
+  # JOB 4: LOAD TESTS (Agora com Link Bonito)
   # ------------------------------------------------------------------
   load-tests:
     name: K6 Performance
@@ -144,7 +144,8 @@ jobs:
           docker compose -f tests/k6-load/docker-compose.yml up -d influxdb grafana
           echo "⏳ Aguardando serviços estabilizarem..."
           sleep 15
-          npm run k6:ci -- --summary-export=k6-summary.json
+          # Note que removi a flag --summary-export pois o handleSummary já faz isso
+          npm run k6:ci
         env:
           K6_BASE_URL: ${{ secrets.K6_BASE_URL }}
       
@@ -152,8 +153,30 @@ jobs:
         if: always()
         run: docker compose -f tests/k6-load/docker-compose.yml down
 
-      - uses: actions/upload-artifact@v4
+      # Organiza os arquivos para publicação
+      - name: Prepare Report
         if: always()
+        run: |
+          mkdir -p k6-report
+          # Move o html gerado para a pasta que será publicada
+          mv tests/k6-load/dist/report.html k6-report/index.html || mv report.html k6-report/index.html
+      
+      # Publica no GitHub Pages (Subpasta /k6-report)
+      - name: Deploy K6 Report
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          name: k6-report
-          path: k6-summary.json
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: k6-report
+          destination_dir: k6-report  # Cria: seudesign.github.io/repo/k6-report
+          keep_files: true            # IMPORTANTE: Não apaga o Allure!
+          commit_message: "Deploy K6 Dashboard"
+
+      # Link Bonito no Resumo
+      - name: 📢 Post Report Link
+        if: always()
+        run: |
+          echo "### 🚀 Relatório de Performance (K6)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Dashboard gerado com sucesso!" >> $GITHUB_STEP_SUMMARY
+          echo "👉 **[CLIQUE AQUI PARA VER O DASHBOARD K6](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/k6-report/)**" >> $GITHUB_STEP_SUMMARY  

@@ -1,12 +1,9 @@
 const path = require("path");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
-// Eu removi a dependência de "webpack-node-externals" se ela não for essencial para o bundle web, 
-// mas mantive a estrutura original focada em CommonJS.
 
 module.exports = {
   mode: "production",
   entry: {
-    // Eu ajustei o caminho para garantir que o __dirname funcione corretamente em CommonJS
     fullstack: path.resolve(__dirname, "./src/simulations/loadPerformanceFullstack.test.js"),
   },
   output: {
@@ -37,7 +34,7 @@ module.exports = {
     ],
   },
   target: "web",
-  externals: /^k6(\/.*)?/, 
+  externals: /^(k6|https?\:\/\/)(\/.*)?/, 
   plugins: [
     new CleanWebpackPlugin(),
   ],
