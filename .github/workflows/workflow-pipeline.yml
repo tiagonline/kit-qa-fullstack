@@ -13,8 +13,8 @@ permissions:
   id-token: write
 
 jobs:
-  # ------------------------------------------------------------------
-  # JOB 1: API TESTS (Bolinha 1)
+# ------------------------------------------------------------------
+  # JOB 1: API TESTS
   # ------------------------------------------------------------------
   api-tests:
     name: API
@@ -32,6 +32,12 @@ jobs:
         run: npm run test:api
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
+      - uses: actions/upload-artifact@v4
+        if: always() # Garante que rode mesmo se os testes falharem
+        with:
+          name: api-report
+          path: playwright-report/
+          retention-days: 30
 
   # ------------------------------------------------------------------
   # JOB 2: E2E TESTS & REPORT (Bolinha 2 + Link do Allure)
