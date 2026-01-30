@@ -1,0 +1,4 @@
+usuario,senha,mensagem
+standard_user,senha_errada,Epic sadface: Username and password do not match
+locked_out_user,secret_sauce,Epic sadface: Sorry, this user has been locked out.
+,secret_sauce,Epic sadface: Username is required
