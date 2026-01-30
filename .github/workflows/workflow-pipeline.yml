@@ -80,7 +80,7 @@ jobs:
       - run: npx playwright install --with-deps
       
       - name: Run Mobile Tests
-        run: test:mobile
+        run: npx playwright test tests/mobile --project='Mobile'
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
       
@@ -106,7 +106,7 @@ jobs:
       # Nota: Container já vem com browsers instalados
       
       - name: Run Visual Tests
-        run: npm run test:visual
+        run: npx playwright test --project='Visual Regression'
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
       
