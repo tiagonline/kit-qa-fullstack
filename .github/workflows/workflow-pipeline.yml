@@ -17,7 +17,7 @@ jobs:
   # JOB 1: API TESTS (Bolinha 1)
   # ------------------------------------------------------------------
   api-tests:
-    name: API and Accessibility Tests
+    name: API
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
   # JOB 2: E2E TESTS & REPORT (Bolinha 2 + Link do Allure)
   # ------------------------------------------------------------------
   e2e-tests:
-    name: E2E Tests w/ Allure Report
+    name: E2E w/ accessibility
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -55,10 +55,6 @@ jobs:
       
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      
-      # REMOVI o 'continue-on-error: true'. 
-      # Agora, se falhar, o pipeline fica VERMELHO (Correto para QA Sênior).
-      # Os passos abaixo rodarão mesmo assim devido ao 'if: always()'
       - name: Run E2E Tests
         run: npm run test:e2e
         env:
@@ -105,7 +101,7 @@ jobs:
   # JOB 3: MOBILE TESTS (Bolinha 3)
   # ------------------------------------------------------------------
   mobile-tests:
-    name: Mobile Tests
+    name: Mobile
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -131,7 +127,7 @@ jobs:
   # JOB 4: LOAD TESTS (Bolinha 4)
   # ------------------------------------------------------------------
   load-tests:
-    name: Performance Tests
+    name: K6 Performance
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
