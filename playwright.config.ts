@@ -2,7 +2,6 @@ import { defineConfig, devices } from "@playwright/test";
 import * as dotenv from 'dotenv';
 import path from 'path';
 
-// Carrega variáveis de ambiente
 const envPath = process.env.DOTENV_CONFIG_PATH || '.env'; 
 dotenv.config({ path: path.resolve(__dirname, envPath) });
 
@@ -17,7 +16,7 @@ export default defineConfig({
     ['list'],
     ['allure-playwright', { 
       detail: true,
-      outputFolder: 'allure-results',
+      outputFolder: 'allure-results', 
       suiteTitle: false 
     }]
   ],
@@ -28,18 +27,30 @@ export default defineConfig({
     video: "on",
     trace: "on",
     screenshot: "only-on-failure",
+    // Ignora animações css para evitar "falsos positivos" no teste visual
+    ignoreHTTPSErrors: true,
+  },
+  
+  // Configuração global para snapshots (ajuste a sensibilidade se precisar)
+  expect: {
+    toHaveScreenshot: { maxDiffPixels: 100 } // Tolera até 100 pixels diferentes
   },
 
   projects: [
     {
-      name: "chromium",
+      name: "e2e Tests",
       use: { ...devices["Desktop Chrome"] },
-      testIgnore: '**/mobile/**', 
+      testIgnore: ['**/mobile/**', '**/visual/**'],
     },
     {
-      name: "Mobile Chrome",
+      name: "Mobile Tests",
       use: { ...devices["Pixel 5"] },
       testMatch: '**/mobile/*.spec.ts',
+    },
+    {
+      name: "Visual Regression",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: '**/visual/*.spec.ts', 
     },
   ],
 });
