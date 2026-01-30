@@ -14,10 +14,10 @@ permissions:
 
 jobs:
   # ==================================================================
-  # PARTE 1: RODAR TESTES (TUDO EM PARALELO)
+  # PARTE 1: RODAR TESTES (PARALELO)
   # ==================================================================
 
-  # 1. API TESTS
+  # 1. API TESTS (Gera Allure JSONs)
   api-tests:
     name: ⚡ API Tests
     runs-on: ubuntu-latest
@@ -33,14 +33,15 @@ jobs:
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
 
+      # Salva os resultados parciais do Allure
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: api-report
-          path: playwright-report/
+          name: allure-api
+          path: allure-results/
           retention-days: 1
 
-  # 2. E2E TESTS
+  # 2. E2E TESTS (Gera Allure JSONs)
   e2e-tests:
     name: 🖥️ E2E Tests
     runs-on: ubuntu-latest
@@ -60,15 +61,14 @@ jobs:
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
       
-      # Salva os resultados para gerar o relatório depois
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: allure-results
+          name: allure-e2e
           path: allure-results/
           retention-days: 1
 
-  # 3. MOBILE TESTS
+  # 3. MOBILE TESTS (Gera Allure JSONs)
   mobile-tests:
     name: 📱 Mobile Tests
     runs-on: ubuntu-latest
@@ -87,11 +87,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: mobile-report
-          path: playwright-report/
+          name: allure-mobile
+          path: allure-results/
           retention-days: 1
 
-  # 4. LOAD TESTS
+  # 4. LOAD TESTS (K6 continua separado)
   load-tests:
     name: 🚀 K6 Load
     runs-on: ubuntu-latest
@@ -125,17 +125,16 @@ jobs:
           retention-days: 1
 
   # ==================================================================
-  # PARTE 2: DEPLOY ÚNICO (GERENTE DE RELATÓRIOS)
+  # PARTE 2: DEPLOY UNIFICADO
   # ==================================================================
   report-deploy:
-    name: 📊 Publish Reports
+    name: 📊 Publish Unified Report
     if: always()
     needs: [api-tests, e2e-tests, mobile-tests, load-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Recupera histórico antigo
       - name: Get Allure history
         uses: actions/checkout@v4
         continue-on-error: true
@@ -143,32 +142,37 @@ jobs:
           ref: gh-pages
           path: gh-pages-history
 
-      # 2. Baixa TODOS os artefatos
+      # 1. Baixa TUDO (API, E2E, Mobile, K6)
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      # 3. Gera o Allure (cria a pasta 'allure-report' automaticamente)
-      - name: Generate Allure Report
+      # 2. Consolida os resultados do Allure (Junta os JSONs numa pasta só)
+      - name: Merge Allure Results
+        run: |
+          mkdir -p allure-results
+          # Copia resultados da API, E2E e Mobile para a mesma pasta
+          cp artifacts/allure-api/* allure-results/ || true
+          cp artifacts/allure-e2e/* allure-results/ || true
+          cp artifacts/allure-mobile/* allure-results/ || true
+
+      # 3. Gera UM relatório Allure contendo TUDO
+      - name: Generate Unified Allure Report
         uses: simple-elf/allure-report-action@master
         with:
-          allure_results: artifacts/allure-results
+          allure_results: allure-results
           allure_history: gh-pages-history/allure-history
           keep_reports: 20
 
-      # 4. Organiza a pasta final (CORREÇÃO AQUI 👇)
+      # 4. Organiza pasta Public (Allure Unificado na raiz + K6 na subpasta)
       - name: Organize Reports
         run: |
-          mkdir -p public/api-report
-          mkdir -p public/mobile-report
           mkdir -p public/k6-report
           
-          # A CORREÇÃO: Copia 'allure-report' (onde o site é gerado) para a raiz do public
+          # Allure na Raiz
           cp -r allure-report/* public/
           
-          # Copia os outros relatórios
-          cp -r artifacts/api-report/* public/api-report/
-          cp -r artifacts/mobile-report/* public/mobile-report/
+          # K6 na subpasta
           cp -r artifacts/k6-report/* public/k6-report/
 
       # 5. Deploy
@@ -180,13 +184,11 @@ jobs:
           publish_dir: public
           force_orphan: true
 
-      # 6. Links no Resumo
+      # 6. Tabela Atualizada
       - name: 📢 Summary Links
         run: |
-          echo "### 📊 Central de Relatórios QA" >> $GITHUB_STEP_SUMMARY
-          echo "| Tipo de Teste | Status | Link |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🖥️ **E2E (Allure)** | ✅ Gerado | [Ver Relatório](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}) |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📡 **API** | ✅ Gerado | [Ver Relatório](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/api-report/) |" >> $GITHUB_STEP_SUMMARY
-          echo "| 📱 **Mobile** | ✅ Gerado | [Ver Relatório](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/mobile-report/) |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🚀 **Load (K6)** | ✅ Gerado | [Ver Relatório](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/k6-report/) |" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Central de Relatórios Unificada" >> $GITHUB_STEP_SUMMARY
+          echo "| Tipo de Teste | Visualizar |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏅 **QA Dashboard (E2E + API + Mobile)** | [**Ver Allure Report**](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🚀 **Performance (K6)** | [**Ver K6 Dashboard**](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/k6-report/) |" >> $GITHUB_STEP_SUMMARY
