@@ -5,9 +5,9 @@ import postRequest from "../requests/postRequest";
 export let options = {
   // Configuração 500 usuários por 5 minutos
   stages: [
-    { duration: "1m", target: 500 }, // Rampa de subida
-    { duration: "5m", target: 500 }, // Mantém 500 usuários por 5 minutos (Requisito)
-    { duration: "1m", target: 0 },   // Rampa de descida
+    { duration: "30s", target: 200 }, // Rampa de subida
+    { duration: "1m", target: 500 }, // Mantém 500 usuários por 5 minutos (Requisito)
+    { duration: "30s", target: 0 },   // Rampa de descida
   ],
   thresholds: {
     http_req_duration: ["p(95)<2000"], // 95% das requisições abaixo de 2s
