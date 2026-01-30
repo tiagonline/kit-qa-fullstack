@@ -13,34 +13,8 @@ permissions:
   id-token: write
 
 jobs:
-# ------------------------------------------------------------------
-  # JOB 1: API TESTS
   # ------------------------------------------------------------------
-  api-tests:
-    name: API
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: 'npm'
-      - run: npm ci
-      - run: npx playwright install --with-deps
-      
-      - name: Run API Tests
-        run: npm run test:api
-        env:
-          API_BASE_URL: ${{ secrets.API_BASE_URL }}
-      - uses: actions/upload-artifact@v4
-        if: always() # Garante que rode mesmo se os testes falharem
-        with:
-          name: api-report
-          path: playwright-report/
-          retention-days: 30
-
-  # ------------------------------------------------------------------
-  # JOB 2: E2E TESTS & REPORT (Bolinha 2 + Link do Allure)
+  # JOB 1: E2E TESTS (O "Chefe" do Deploy - Roda Primeiro)
   # ------------------------------------------------------------------
   e2e-tests:
     name: E2E w/ a11y
@@ -61,6 +35,7 @@ jobs:
       
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      
       - name: Run E2E Tests
         run: npm run test:e2e
         env:
@@ -86,7 +61,7 @@ jobs:
           allure_history: allure-history
           keep_reports: 20
 
-      # Publica no branch gh-pages
+      # Publica no branch gh-pages (LIMPA A RAIZ e coloca o Allure)
       - name: Deploy report to Github Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v3
@@ -95,26 +70,70 @@ jobs:
           publish_branch: gh-pages
           publish_dir: allure-history
       
-      # [O PULO DO GATO] Escreve o link no Resumo da Execução do GitHub
       - name: 📢 Post Report Link
         if: always()
         run: |
-          echo "### 📊 Relatório de Testes E2E (Allure)" >> $GITHUB_STEP_SUMMARY
-          echo "✅ O relatório foi gerado e implantado com sucesso!" >> $GITHUB_STEP_SUMMARY
-          echo "👉 **[CLIQUE AQUI PARA VER O RELATÓRIO COMPLETO](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }})**" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Relatório E2E (Allure)" >> $GITHUB_STEP_SUMMARY
+          echo "👉 **[VER RELATÓRIO ALLURE](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }})**" >> $GITHUB_STEP_SUMMARY
 
   # ------------------------------------------------------------------
-  # JOB 3: MOBILE TESTS (Bolinha 3)
+  # JOB 2: API TESTS (Espera o E2E para publicar na subpasta)
   # ------------------------------------------------------------------
-  mobile-tests:
-    name: Mobile
+  api-tests:
+    name: API
+    needs: e2e-tests # ⚠️ Espera o E2E para não quebrar o deploy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
+        with: { node-version: 18, cache: 'npm' }
+      - run: npm ci
+      - run: npx playwright install --with-deps
+      
+      - name: Run API Tests
+        run: npm run test:api
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+
+      # 1. Salva o HTML como Artefato (Segurança)
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          node-version: 18
-          cache: 'npm'
+          name: api-report
+          path: playwright-report/
+          retention-days: 30
+      
+      # 2. Publica na subpasta /api-report
+      - name: Deploy API Report
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: playwright-report
+          destination_dir: api-report # <--- Cria a subpasta
+          keep_files: true            # <--- NÃO APAGA O ALLURE!
+          commit_message: "Deploy API Report"
+
+      # 3. Gera o Link Bonito
+      - name: 📢 Post Report Link
+        if: always()
+        run: |
+          echo "### 📡 Relatório de API (Playwright)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Testes de API finalizados!" >> $GITHUB_STEP_SUMMARY
+          echo "👉 **[VER RELATÓRIO DE API](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/api-report/)**" >> $GITHUB_STEP_SUMMARY
+
+  # ------------------------------------------------------------------
+  # JOB 3: MOBILE TESTS (Espera o E2E para publicar na subpasta)
+  # ------------------------------------------------------------------
+  mobile-tests:
+    name: Mobile
+    needs: e2e-tests # ⚠️ Espera o E2E para não quebrar o deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 18, cache: 'npm' }
       - run: npm ci
       - run: npx playwright install --with-deps
       
@@ -129,12 +148,30 @@ jobs:
           name: mobile-report
           path: playwright-report/
 
+      # Publica na subpasta /mobile-report
+      - name: Deploy Mobile Report
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: playwright-report
+          destination_dir: mobile-report # <--- Cria a subpasta
+          keep_files: true               # <--- NÃO APAGA O RESTO!
+          commit_message: "Deploy Mobile Report"
+
+      - name: 📢 Post Report Link
+        if: always()
+        run: |
+          echo "### 📱 Relatório Mobile (Playwright)" >> $GITHUB_STEP_SUMMARY
+          echo "👉 **[VER RELATÓRIO MOBILE](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/mobile-report/)**" >> $GITHUB_STEP_SUMMARY
+
   # ------------------------------------------------------------------
-  # JOB 4: LOAD TESTS (Agora com Link Bonito)
+  # JOB 4: LOAD TESTS (Espera o E2E para publicar na subpasta)
   # ------------------------------------------------------------------
   load-tests:
     name: K6 Performance
-    needs: e2e-tests
+    needs: e2e-tests # ⚠️ Espera o E2E para não quebrar o deploy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -151,7 +188,6 @@ jobs:
           docker compose -f tests/k6-load/docker-compose.yml up -d influxdb grafana
           echo "⏳ Aguardando serviços estabilizarem..."
           sleep 15
-          # Note que removi a flag --summary-export pois o handleSummary já faz isso
           npm run k6:ci
         env:
           K6_BASE_URL: ${{ secrets.K6_BASE_URL }}
@@ -176,7 +212,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: k6-report
-          destination_dir: k6-report  # Cria: seudesign.github.io/repo/k6-report
+          destination_dir: k6-report  # Cria subpasta
           keep_files: true            # IMPORTANTE: Não apaga o Allure!
           commit_message: "Deploy K6 Dashboard"
 
@@ -186,4 +222,4 @@ jobs:
         run: |
           echo "### 🚀 Relatório de Performance (K6)" >> $GITHUB_STEP_SUMMARY
           echo "✅ Dashboard gerado com sucesso!" >> $GITHUB_STEP_SUMMARY
-          echo "👉 **[CLIQUE AQUI PARA VER O DASHBOARD K6](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/k6-report/)**" >> $GITHUB_STEP_SUMMARY  
+          echo "👉 **[VER RELATÓRIO K6](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/k6-report/)**" >> $GITHUB_STEP_SUMMARY
