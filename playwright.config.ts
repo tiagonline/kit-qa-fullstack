@@ -38,12 +38,12 @@ export default defineConfig({
 
   projects: [
     {
-      name: "e2e Tests",
+      name: "E2E",
       use: { ...devices["Desktop Chrome"] },
       testIgnore: ['**/mobile/**', '**/visual/**'],
     },
     {
-      name: "Mobile Tests",
+      name: "Mobile",
       use: { ...devices["Pixel 5"] },
       testMatch: '**/mobile/*.spec.ts',
     },
