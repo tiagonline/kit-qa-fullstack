@@ -4,10 +4,8 @@ import { PageManager } from '../../../pages/PageManager';
 
 Given('que tenho produtos no carrinho', async function () {
   this.pageManager = new PageManager(this.page);
-  // Atualizado: goto() -> navigate()
-  await this.pageManager.login.navigate();
-  // Atualizado: login() -> performLogin()
-  await this.pageManager.login.performLogin('standard_user', 'secret_sauce');
+  await this.pageManager.login.navigate(); // <--- Novo nome
+  await this.pageManager.login.performLogin('standard_user', 'secret_sauce'); // <--- Novo nome
   await this.pageManager.inventory.addToCart('Sauce Labs Backpack');
   await this.pageManager.inventory.goToCart();
 });
@@ -29,7 +27,6 @@ Then('devo ver a mensagem de sucesso {string}', async function (mensagem) {
 });
 
 When('tento continuar sem preencher os dados', async function () {
-  // Apenas clica no continue sem preencher nada
   await this.page.locator('[data-test="continue"]').click();
 });
 
