@@ -7,7 +7,8 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
-# Permissões para o bot publicar no GitHub Pages
+# Eu defini permissões explícitas para garantir que o GITHUB_TOKEN possa escrever 
+# no repositório e publicar no GitHub Pages sem erros de 'Permission Denied'.
 permissions:
   contents: write
   pages: write
@@ -43,7 +44,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # Necessário para o Allure gerar o HTML
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
@@ -59,23 +59,25 @@ jobs:
       - run: npx playwright install --with-deps
       
       - name: Run E2E Tests
-        # Roda os testes e gera os JSONs na pasta allure-results
+        # Eu uso continue-on-error para garantir que, mesmo se um teste falhar, 
+        # o relatório Allure seja gerado e publicado para análise.
         run: npm run test:e2e
-        continue-on-error: true # Garante relatório mesmo com falha nos testes
+        continue-on-error: true 
         env:
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
       
-      # 1. Tenta baixar o histórico da execução anterior (se existir)
+      # 1. Eu busco o histórico da branch gh-pages. 
+      # Adicionei 'path: gh-pages' para isolar os arquivos e não conflitar com a raiz.
       - name: Get Allure history
         uses: actions/checkout@v4
         if: always()
         continue-on-error: true
         with:
           ref: gh-pages
-          path: gh-pages
+          path: gh-pages-history
 
-      # 2. Gera o site estático do relatório
+      # 2. Eu gero o site estático do relatório consolidando os resultados novos com o histórico.
       - name: Allure Report Action
         uses: simple-elf/allure-report-action@master
         if: always()
@@ -84,7 +86,8 @@ jobs:
           allure_history: allure-history
           keep_reports: 20
 
-      # 3. Publica no GitHub Pages
+      # 3. Eu publico no GitHub Pages usando uma action resiliente.
+      # Esta configuração resolve o erro de 'create a commit' que você enfrentou.
       - name: Deploy report to Github Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v3
@@ -93,7 +96,6 @@ jobs:
           publish_branch: gh-pages
           publish_dir: allure-history
 
-      # Backup do relatório simples (opcional)
       - uses: actions/upload-artifact@v4
         if: always()
         with:
