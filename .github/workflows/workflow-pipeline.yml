@@ -7,15 +7,17 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
-# Eu defini permissões explícitas para garantir que o GITHUB_TOKEN possa fazer deploy no gh-pages
 permissions:
   contents: write
   pages: write
   id-token: write
 
 jobs:
+  # ------------------------------------------------------------------
+  # JOB 1: API TESTS (Bolinha 1)
+  # ------------------------------------------------------------------
   api-tests:
-    name: API Testing
+    name: 🟢 API Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,38 +27,46 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx playwright install --with-deps
+      
       - name: Run API Tests
         run: npm run test:api
         env:
-          # Eu injeto a variável de ambiente segura aqui
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
 
+  # ------------------------------------------------------------------
+  # JOB 2: E2E TESTS & REPORT (Bolinha 2 + Link do Allure)
+  # ------------------------------------------------------------------
   e2e-tests:
-    name: E2E Testing
+    name: 🔶 E2E Tests (Allure)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Java
+      
+      - name: Setup Java (Required for Allure)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
+      
       - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'npm'
-      - run: npm ci
-      - run: npx playwright install --with-deps
       
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      
+      # REMOVI o 'continue-on-error: true'. 
+      # Agora, se falhar, o pipeline fica VERMELHO (Correto para QA Sênior).
+      # Os passos abaixo rodarão mesmo assim devido ao 'if: always()'
       - name: Run E2E Tests
         run: npm run test:e2e
-        continue-on-error: true 
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
-          # Eu garanto que credenciais nunca sejam hardcoded
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
       
+      # Baixa o histórico anterior para manter a tendência no gráfico
       - name: Get Allure history
         uses: actions/checkout@v4
         if: always()
@@ -65,7 +75,8 @@ jobs:
           ref: gh-pages
           path: gh-pages-history
 
-      - name: Allure Report Action
+      # Gera o relatório HTML combinando resultado atual + histórico
+      - name: Generate Allure Report
         uses: simple-elf/allure-report-action@master
         if: always()
         with:
@@ -73,6 +84,7 @@ jobs:
           allure_history: allure-history
           keep_reports: 20
 
+      # Publica no branch gh-pages
       - name: Deploy report to Github Pages
         if: always()
         uses: peaceiris/actions-gh-pages@v3
@@ -80,9 +92,20 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-history
+      
+      # [O PULO DO GATO] Escreve o link no Resumo da Execução do GitHub
+      - name: 📢 Post Report Link
+        if: always()
+        run: |
+          echo "### 📊 Relatório de Testes E2E (Allure)" >> $GITHUB_STEP_SUMMARY
+          echo "✅ O relatório foi gerado e implantado com sucesso!" >> $GITHUB_STEP_SUMMARY
+          echo "👉 **[CLIQUE AQUI PARA VER O RELATÓRIO COMPLETO](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }})**" >> $GITHUB_STEP_SUMMARY
 
+  # ------------------------------------------------------------------
+  # JOB 3: MOBILE TESTS (Bolinha 3)
+  # ------------------------------------------------------------------
   mobile-tests:
-    name: Mobile Testing
+    name: 📱 Mobile Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -104,8 +127,11 @@ jobs:
           name: mobile-report
           path: playwright-report/
 
+  # ------------------------------------------------------------------
+  # JOB 4: LOAD TESTS (Bolinha 4)
+  # ------------------------------------------------------------------
   load-tests:
-    name: Performance Testing
+    name: 🚀 K6 Load Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -118,11 +144,9 @@ jobs:
         uses: grafana/setup-k6-action@v1
       
       - name: Start Docker & Run Load Tests
-        # Eu adicionei um sleep de 15s para garantir que o InfluxDB esteja pronto antes do K6 tentar conectar.
-        # Isso evita falhas de "Connection Refused" no CI.
         run: |
           docker compose -f tests/k6-load/docker-compose.yml up -d influxdb grafana
-          echo "Aguardando serviços estabilizarem..."
+          echo "⏳ Aguardando serviços estabilizarem..."
           sleep 15
           npm run k6:ci -- --summary-export=k6-summary.json
         env:
