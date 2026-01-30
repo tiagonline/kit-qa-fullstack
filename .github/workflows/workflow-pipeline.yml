@@ -33,7 +33,6 @@ jobs:
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
 
-      # Apenas salva o arquivo, não publica ainda
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -41,13 +40,13 @@ jobs:
           path: playwright-report/
           retention-days: 1
 
-  # 2. E2E TESTS (Sem publicar pages aqui)
+  # 2. E2E TESTS
   e2e-tests:
     name: 🖥️ E2E Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v3 # Necessário para gerar Allure depois
+      - uses: actions/setup-java@v3
         with: { distribution: 'temurin', java-version: '17' }
       - uses: actions/setup-node@v4
         with: { node-version: 18, cache: 'npm' }
@@ -61,7 +60,7 @@ jobs:
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
       
-      # Salva os resultados "crus" do Allure para gerar o HTML depois
+      # Salva os resultados para gerar o relatório depois
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -130,13 +129,13 @@ jobs:
   # ==================================================================
   report-deploy:
     name: 📊 Publish Reports
-    if: always() # Roda mesmo se testes falharem
-    needs: [api-tests, e2e-tests, mobile-tests, load-tests] # Espera todo mundo
+    if: always()
+    needs: [api-tests, e2e-tests, mobile-tests, load-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Recupera o histórico antigo do Allure (para manter gráficos de tendência)
+      # 1. Recupera histórico antigo
       - name: Get Allure history
         uses: actions/checkout@v4
         continue-on-error: true
@@ -144,12 +143,12 @@ jobs:
           ref: gh-pages
           path: gh-pages-history
 
-      # 2. Baixa TODOS os artefatos gerados pelos testes
+      # 2. Baixa TODOS os artefatos
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      # 3. Gera o Relatório Allure Final (transforma JSON em HTML)
+      # 3. Gera o Allure (cria a pasta 'allure-report' automaticamente)
       - name: Generate Allure Report
         uses: simple-elf/allure-report-action@master
         with:
@@ -157,35 +156,29 @@ jobs:
           allure_history: gh-pages-history/allure-history
           keep_reports: 20
 
-      # 4. Organiza a pasta final que será publicada
+      # 4. Organiza a pasta final (CORREÇÃO AQUI 👇)
       - name: Organize Reports
         run: |
           mkdir -p public/api-report
           mkdir -p public/mobile-report
           mkdir -p public/k6-report
           
-          # Move Allure (que já foi gerado na pasta allure-history pelo plugin)
-          cp -r allure-history public/
-          # Cria um index na raiz redirecionando pro Allure (opcional, ou copia o conteudo)
-          cp -r allure-history/* public/
+          # A CORREÇÃO: Copia 'allure-report' (onde o site é gerado) para a raiz do public
+          cp -r allure-report/* public/
           
-          # Move API Report
+          # Copia os outros relatórios
           cp -r artifacts/api-report/* public/api-report/
-          
-          # Move Mobile Report
           cp -r artifacts/mobile-report/* public/mobile-report/
-          
-          # Move K6 Report
           cp -r artifacts/k6-report/* public/k6-report/
 
-      # 5. Faz o Deploy de TUDO de uma vez
+      # 5. Deploy
       - name: Deploy to Github Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: public
-          force_orphan: true # Limpa o branch e sobe a versão nova limpa
+          force_orphan: true
 
       # 6. Links no Resumo
       - name: 📢 Summary Links
