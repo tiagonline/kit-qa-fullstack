@@ -3,19 +3,26 @@ import { expect } from '@playwright/test';
 import { PageManager } from '../../../pages/PageManager';
 
 Given('que estou na página de login', async function () {
-  this.pageManager = new PageManager(this.page);
-  await this.pageManager.login.goto();
+  // Garante que o PageManager está instanciado (caso o hook falhe ou para segurança)
+  if (!this.pageManager) this.pageManager = new PageManager(this.page);
+  
+  // 👇 Chama o novo método navigate()
+  await this.pageManager.login.navigate();
 });
 
 When('preencho as credenciais válidas', async function () {
   const username = process.env.SAUCE_USERNAME?.trim();
   const password = process.env.SAUCE_PASSWORD?.trim();
-  await this.pageManager.login.login(username!, password!);
+  
+  // 👇 Chama o novo método performLogin()
+  await this.pageManager.login.performLogin(username!, password!);
 });
 
 When('tento logar com usuario {string} e senha {string}', async function (usuario, senha) {
   if (!this.pageManager) this.pageManager = new PageManager(this.page);
-  await this.pageManager.login.login(usuario, senha);
+  
+  // 👇 Chama o novo método performLogin()
+  await this.pageManager.login.performLogin(usuario, senha);
 });
 
 Then('devo ver a mensagem de erro {string}', async function (mensagem) {
