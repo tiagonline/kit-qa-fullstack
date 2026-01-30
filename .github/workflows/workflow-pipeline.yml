@@ -17,7 +17,7 @@ jobs:
   # JOB 1: API TESTS (Bolinha 1)
   # ------------------------------------------------------------------
   api-tests:
-    name: 🟢 API Tests
+    name: API and Accessibility Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
   # JOB 2: E2E TESTS & REPORT (Bolinha 2 + Link do Allure)
   # ------------------------------------------------------------------
   e2e-tests:
-    name: 🔶 E2E Tests (Allure)
+    name: E2E Tests w/ Allure Report
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -105,7 +105,7 @@ jobs:
   # JOB 3: MOBILE TESTS (Bolinha 3)
   # ------------------------------------------------------------------
   mobile-tests:
-    name: 📱 Mobile Tests
+    name: Mobile Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -131,7 +131,7 @@ jobs:
   # JOB 4: LOAD TESTS (Bolinha 4)
   # ------------------------------------------------------------------
   load-tests:
-    name: 🚀 K6 Load Tests
+    name: Performance Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
