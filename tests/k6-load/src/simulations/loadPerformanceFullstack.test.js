@@ -5,9 +5,9 @@ import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporte
 
 export let options = {
   stages: [
-    { duration: "1m", target: 500 },
-    { duration: "5m", target: 500 },
-    { duration: "1m", target: 0 },
+    { duration: "10s", target: 20 },
+    { duration: "30s", target: 50 },
+    { duration: "10s", target: 10 },
   ],
   thresholds: {
     http_req_duration: ["p(95)<2000"],
