@@ -1,4 +1,5 @@
-//Este arquivo centraliza a gestão das páginas, fornecendo acesso fácil e organizado a cada uma delas.
+// Este arquivo centraliza a gestão das páginas, fornecendo acesso fácil e organizado a cada uma delas.
+// Facilita a importação e uso das páginas nos testes.
 
 import { Page } from "@playwright/test";
 import { LoginPage } from "./LoginPage";
