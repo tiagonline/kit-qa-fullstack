@@ -2,14 +2,29 @@
 
 > Projeto de automação de testes "End-to-End" simulando um ambiente real de produção. O projeto abrange testes de API e contrato, Interface Web (BDD), Mobile (Emulação), Acessibilidade(WCAG) e Performance (Carga).
 
-[![Relatório Allure](https://img.shields.io/badge/Allure_Report-Visualizar-orange?logo=allure&logoColor=white)](https://tiagonline.github.io/kit-qa-fullstack/)
-[![CI Status](https://github.com/tiagonline/kit-qa-fullstack/actions/workflows/workflow-pipeline.yml/badge.svg)](https://github.com/tiagonline/kit-qa-fullstack/actions/workflows/workflow-pipeline.yml)
-![Playwright](https://img.shields.io/badge/Playwright-1.40+-green?logo=playwright&logoColor=white)
-![Cucumber](https://img.shields.io/badge/Cucumber-BDD-23d160?logo=cucumber&logoColor=white)
-![K6](https://img.shields.io/badge/K6-Performance-purple?logo=k6&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker&logoColor=white)
-![NodeJS](https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs&logoColor=white)
-![Axe-core](https://img.shields.io/badge/Axe--core-A11y-orange?logo=accessibility&logoColor=white)
+<div align="center">
+
+<a href="https://tiagonline.github.io/kit-qa-fullstack/k6-report/" target="_blank">
+  <img src="https://img.shields.io/badge/K6-Performance%20Dashboard-7D64FF?style=for-the-badge&logo=k6&logoColor=white" alt="K6 Report"/>
+</a>
+
+<a href="https://tiagonline.github.io/kit-qa-fullstack/" target="_blank">
+  <img src="https://img.shields.io/badge/Allure-E2E%20Report-FF6F00?style=for-the-badge&logo=allure&logoColor=white" alt="Allure Report"/>
+</a>
+
+<a href="https://github.com/tiagonline/kit-qa-fullstack/actions">
+  <img src="https://img.shields.io/github/actions/workflow/status/tiagonline/kit-qa-fullstack/workflow-pipeline.yml?style=for-the-badge&label=Build%20Status" alt="Build Status"/>
+</a>
+
+<br/>
+
+<img src="https://img.shields.io/badge/Playwright-1.40+-green?logo=playwright&logoColor=white" alt="Playwright"/>
+<img src="https://img.shields.io/badge/Cucumber-BDD-23d160?logo=cucumber&logoColor=white" alt="Cucumber"/>
+<img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker&logoColor=white" alt="Docker"/>
+<img src="https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs&logoColor=white" alt="NodeJS"/>
+<img src="https://img.shields.io/badge/Axe--core-A11y-orange?logo=accessibility&logoColor=white" alt="Axe-core"/>
+
+</div>
 
 ---
 
