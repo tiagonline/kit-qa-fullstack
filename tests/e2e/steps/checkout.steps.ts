@@ -4,8 +4,8 @@ import { PageManager } from '../../../pages/PageManager';
 
 Given('que tenho produtos no carrinho', async function () {
   this.pageManager = new PageManager(this.page);
-  await this.pageManager.login.navigate(); // <--- Novo nome
-  await this.pageManager.login.performLogin('standard_user', 'secret_sauce'); // <--- Novo nome
+  await this.pageManager.login.navigate();
+  await this.pageManager.login.performLogin('standard_user', 'secret_sauce');
   await this.pageManager.inventory.addToCart('Sauce Labs Backpack');
   await this.pageManager.inventory.goToCart();
 });
