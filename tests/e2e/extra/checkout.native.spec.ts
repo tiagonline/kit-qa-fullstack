@@ -7,8 +7,6 @@ import * as dotenv from "dotenv";
 import { faker } from "@faker-js/faker";
 
 dotenv.config();
-
-// Configuro para rodar em série se um falhar
 test.describe.configure({ mode: 'serial' });
 
 test.describe("E2E Nativo | Fluxo de Compra SAUCE LABS", () => {
@@ -17,7 +15,6 @@ test.describe("E2E Nativo | Fluxo de Compra SAUCE LABS", () => {
   let cartPage: CartPage;
   let checkoutPage: CheckoutPage;
 
-  // Credenciais por variáveis de ambiente
   const VALID_USERNAME = process.env.SAUCE_USERNAME;
   const VALID_PASSWORD = process.env.SAUCE_PASSWORD;
 
@@ -26,16 +23,16 @@ test.describe("E2E Nativo | Fluxo de Compra SAUCE LABS", () => {
     inventoryPage = new InventoryPage(page);
     cartPage = new CartPage(page);
     checkoutPage = new CheckoutPage(page);
-    await loginPage.goto();
+    
+    await loginPage.navigate();
   });
 
   test("Cenário Negativo - Deve falhar ao tentar logar com credenciais inválidas", async () => {
-    // Gero dados inválidos
     const invalidPassword = faker.internet.password();
     const invalidUsername = faker.internet.userName();
 
     await test.step("Quando: Tenta logar com credenciais inválidas", async () => {
-      await loginPage.login(invalidUsername, invalidPassword);
+      await loginPage.performLogin(invalidUsername, invalidPassword);
     });
 
     await test.step("Então: Deve mostrar mensagem de erro", async () => {
@@ -44,13 +41,12 @@ test.describe("E2E Nativo | Fluxo de Compra SAUCE LABS", () => {
   });
 
   test("Cenário E2E Principal - Deve realizar a compra de um item com sucesso", async () => {
-    // Dados dinâmicos criados pelo FAKER
     const firstName = faker.person.firstName();
     const lastName = faker.person.lastName();
     const postalCode = faker.location.zipCode();
 
     await test.step("Dado: Que o login é feito com sucesso", async () => {
-      await loginPage.login(VALID_USERNAME, VALID_PASSWORD);
+      await loginPage.performLogin(VALID_USERNAME, VALID_PASSWORD);
     });
 
     await test.step("Quando: Adiciono a mochila e prossigo para o checkout", async () => {
@@ -71,19 +67,17 @@ test.describe("E2E Nativo | Fluxo de Compra SAUCE LABS", () => {
 
   test("Cenário Exceção - Deve falhar o checkout com campos de entrega incompletos", async () => {
     await test.step("Dado: Que o login é feito com sucesso", async () => {
-      await loginPage.login(VALID_USERNAME, VALID_PASSWORD);
+      await loginPage.performLogin(VALID_USERNAME, VALID_PASSWORD);
     });
 
     await test.step("Quando: Adiciono item e tento continuar sem o CEP", async () => {
       await inventoryPage.addItemToCart("Sauce Labs Backpack");
       await inventoryPage.goToCart();
       await cartPage.proceedToCheckout();
-
-      // Simulação de erro (CEP vazio)
       await checkoutPage.fillInformation(
         faker.person.firstName(),
         faker.person.lastName(),
-        "" // CEP Vazio
+        ""
       );
     });
 
