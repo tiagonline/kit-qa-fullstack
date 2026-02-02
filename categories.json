@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Ignorados / Skipped",
+    "matchedStatuses": ["skipped"]
+  },
+  {
+    "name": "Defeitos de Produto (Asserção falhou)",
+    "matchedStatuses": ["failed"],
+    "messageRegex": ".*expect\\(.*"
+  },
+  {
+    "name": "Problemas de Infra / Timeouts",
+    "matchedStatuses": ["broken"],
+    "messageRegex": ".*Timeout.*|.*element not visible.*"
+  }
+]
