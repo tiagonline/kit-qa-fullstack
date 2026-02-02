@@ -22,7 +22,7 @@ test.describe('Regressão Visual', () => {
 
   test('Deve garantir o layout do Inventário', async ({ page }) => {
     await pageManager.login.navigate();
-    await pageManager.login.performLogin('standard_user', 'secret_sauce');
+    await pageManager.login.login('standard_user', 'secret_sauce');
     
     // Aguarda o inventário carregar
     await expect(page).toHaveURL(/.*inventory\.html/);
