@@ -7,8 +7,8 @@ import * as path from 'path';
 // 👇 O PULO DO GATO: Carrega as variáveis do arquivo envs/.env.dev
 dotenv.config({ path: path.resolve(process.cwd(), 'envs/.env.dev') });
 
-// Aumenta o timeout padrão para 30s (ajuda na VPN)
-setDefaultTimeout(30 * 1000);
+console.log('BASE_URL carregada:', process.env.BASE_URL);
+console.log('USUARIO carregado:', process.env.SAUCE_USERNAME);
 
 let browser: Browser;
 let context: BrowserContext;
