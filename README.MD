@@ -4,22 +4,23 @@
 
 <div align="center">
 
+<a href="https://tiagonline.github.io/kit-qa-fullstack/" target="_blank">
+  <img src="https://img.shields.io/badge/Allure-QA%20Dashboard%20Unificado-FF6F00?style=for-the-badge&logo=allure&logoColor=white" alt="Allure Dashboard"/>
+</a>
+
+<a href="https://tiagonline.github.io/kit-qa-fullstack/cucumber/" target="_blank">
+  <img src="https://img.shields.io/badge/Cucumber-BDD%20Living%20Specs-23D96C?style=for-the-badge&logo=cucumber&logoColor=white" alt="Cucumber BDD"/>
+</a>
+
 <a href="https://tiagonline.github.io/kit-qa-fullstack/k6/" target="_blank">
-  <img src="https://img.shields.io/badge/K6-Performance%20Dashboard-7D64FF?style=for-the-badge&logo=k6&logoColor=white" alt="K6 Report"/>
-</a>
-
-<a href="https://tiagonline.github.io/kit-qa-fullstack/" target="_blank">
-  <img src="https://img.shields.io/badge/Allure-E2E%20Report-FF6F00?style=for-the-badge&logo=allure&logoColor=white" alt="Allure Report"/>
-</a>
-
-<a href="https://tiagonline.github.io/kit-qa-fullstack/" target="_blank">
-  <img src="https://img.shields.io/badge/Visual%20Regression-Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white" alt="Visual Regression"/>
+  <img src="https://img.shields.io/badge/K6-Performance%20Dashboard-7D64FF?style=for-the-badge&logo=k6&logoColor=white" alt="K6 Performance"/>
 </a>
 
 <a href="https://github.com/tiagonline/kit-qa-fullstack/actions">
-  <img src="https://img.shields.io/github/actions/workflow/status/tiagonline/kit-qa-fullstack/workflow-pipeline.yml?style=for-the-badge&label=Build%20Status" alt="Build Status"/>
+  <img src="https://img.shields.io/github/actions/workflow/status/tiagonline/kit-qa-fullstack/workflow-pipeline.yml?style=for-the-badge&label=Pipeline%20Build" alt="Build Status"/>
 </a>
 
+<br/>
 <br/>
 
 <img src="https://img.shields.io/badge/Playwright-1.40+-green?logo=playwright&logoColor=white" alt="Playwright"/>
