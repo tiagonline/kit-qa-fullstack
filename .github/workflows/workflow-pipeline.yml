@@ -33,7 +33,7 @@ jobs:
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
 
-      # Salva os resultados parciais do Allure
+      # Salva resultados para o Allure
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -80,7 +80,7 @@ jobs:
       - run: npx playwright install --with-deps
       
       - name: Run Mobile Tests
-        run: npx playwright test tests/mobile --project='Mobile Chrome'
+        run: npx playwright test tests/mobile --project='Mobile'
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
       
@@ -91,7 +91,33 @@ jobs:
           path: allure-results/
           retention-days: 1
 
-  # 4. LOAD TESTS (K6 continua separado)
+  # 4. VISUAL TESTS (NOVO - Gera Allure JSONs)
+  visual-tests:
+    name: 🎨 Visual Regression
+    runs-on: ubuntu-latest
+    # Usa container oficial para garantir que as fontes (fonts) sejam iguais ao local
+    container:
+      image: mcr.microsoft.com/playwright:v1.40.0-jammy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 18 }
+      - run: npm ci
+      # Nota: Container já vem com browsers instalados
+      
+      - name: Run Visual Tests
+        run: npx playwright test --project='Visual Regression'
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+      
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-visual
+          path: allure-results/
+          retention-days: 1
+
+  # 5. LOAD TESTS (K6 separado)
   load-tests:
     name: 🚀 K6 Load
     runs-on: ubuntu-latest
@@ -130,7 +156,8 @@ jobs:
   report-deploy:
     name: 📊 Publish Unified Report
     if: always()
-    needs: [api-tests, e2e-tests, mobile-tests, load-tests]
+    # Espera TODOS os testes acabarem
+    needs: [api-tests, e2e-tests, mobile-tests, visual-tests, load-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -142,7 +169,7 @@ jobs:
           ref: gh-pages
           path: gh-pages-history
 
-      # 1. Baixa TUDO (API, E2E, Mobile, K6)
+      # 1. Baixa TUDO (API, E2E, Mobile, Visual, K6)
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -151,10 +178,11 @@ jobs:
       - name: Merge Allure Results
         run: |
           mkdir -p allure-results
-          # Copia resultados da API, E2E e Mobile para a mesma pasta
+          # Copia resultados de todos os jobs para a pasta final
           cp artifacts/allure-api/* allure-results/ || true
           cp artifacts/allure-e2e/* allure-results/ || true
           cp artifacts/allure-mobile/* allure-results/ || true
+          cp artifacts/allure-visual/* allure-results/ || true
 
       # 3. Gera UM relatório Allure contendo TUDO
       - name: Generate Unified Allure Report
@@ -169,13 +197,13 @@ jobs:
         run: |
           mkdir -p public/k6-report
           
-          # Allure na Raiz
+          # Allure na Raiz (Copia do output gerado: allure-report)
           cp -r allure-report/* public/
           
           # K6 na subpasta
           cp -r artifacts/k6-report/* public/k6-report/
 
-      # 5. Deploy
+      # 5. Deploy para GitHub Pages
       - name: Deploy to Github Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -184,11 +212,11 @@ jobs:
           publish_dir: public
           force_orphan: true
 
-      # 6. Tabela Atualizada
+      # 6. Tabela com Links no Resumo
       - name: 📢 Summary Links
         run: |
           echo "### 📊 Central de Relatórios Unificada" >> $GITHUB_STEP_SUMMARY
           echo "| Tipo de Teste | Visualizar |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🏅 **QA Dashboard (E2E + API + Mobile)** | [**Ver Allure Report**](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏅 **QA Dashboard (E2E + API + Mobile + Visual)** | [**Ver Allure Report**](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}) |" >> $GITHUB_STEP_SUMMARY
           echo "| 🚀 **Performance (K6)** | [**Ver K6 Dashboard**](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/k6-report/) |" >> $GITHUB_STEP_SUMMARY

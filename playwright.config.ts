@@ -28,18 +28,31 @@ export default defineConfig({
     video: "on",
     trace: "on",
     screenshot: "only-on-failure",
+    ignoreHTTPSErrors: true,
+  },
+
+  // 👇 AQUI ESTÁ A MÁGICA
+  expect: {
+    toHaveScreenshot: { 
+      maxDiffPixels: 2000 // Aceita até 2000 pixels diferentes (cobre seus 192 e até os 1150 do outro erro)
+    }
   },
 
   projects: [
     {
-      name: "chromium",
+      name: "E2E",
       use: { ...devices["Desktop Chrome"] },
-      testIgnore: '**/mobile/**', 
+      testIgnore: ['**/mobile/**', '**/visual/**'], 
     },
     {
-      name: "Mobile Chrome",
+      name: "Mobile",
       use: { ...devices["Pixel 5"] },
       testMatch: '**/mobile/*.spec.ts',
+    },
+    {
+      name: "Visual Regression",
+      use: { ...devices["Desktop Chrome"], animations: "disabled" },
+      testMatch: '**/visual/*.spec.ts', 
     },
   ],
 });

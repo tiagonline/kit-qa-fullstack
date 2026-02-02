@@ -12,6 +12,10 @@
   <img src="https://img.shields.io/badge/Allure-E2E%20Report-FF6F00?style=for-the-badge&logo=allure&logoColor=white" alt="Allure Report"/>
 </a>
 
+<a href="https://tiagonline.github.io/kit-qa-fullstack/" target="_blank">
+  <img src="https://img.shields.io/badge/Visual%20Regression-Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white" alt="Visual Regression"/>
+</a>
+
 <a href="https://github.com/tiagonline/kit-qa-fullstack/actions">
   <img src="https://img.shields.io/github/actions/workflow/status/tiagonline/kit-qa-fullstack/workflow-pipeline.yml?style=for-the-badge&label=Build%20Status" alt="Build Status"/>
 </a>
@@ -57,6 +61,7 @@ kit-qa-fullstack/
 │   │   ├── support/     # Hooks e configurações globais do Cucumber
 │   │   └── extra/       # Testes complementares (Playwright Native)
 │   ├── mobile/          # Testes de responsividade mobile (Playwright)
+|   ├── visual/          # Testes de regressão visual (Playwright)                   
 │   └── k6-load/         # Testes de performance e carga (K6 + Docker + Grafana)
 ├── playwright-report/   # Evidências de execução local
 ├── .github/workflows/   # Pipeline paralela (GitHub Actions)
@@ -139,19 +144,26 @@ Além das validações funcionais (Status Code e Regra de Negócio), este projet
   Se o backend alterar o tipo de um dado (ex: enviar `id` como `string` ao invés de `number`) ou remover um campo obrigatório, o teste falha imediatamente, mesmo que o status code seja `200`.
 - **Benefício:** Maior segurança em refatorações e detecção antecipada de quebras de contrato.
 
+### 3.4 Testes de Regressão Visual
+
+Além de garantir que o sistema funciona, garantimos que ele **não quebrou o layout**. Utilizamos a engine nativa do Playwright para comparar pixel-a-pixel a versão atual com imagens de referência (snapshots).
+Este comando executa os testes comparando a tela atual com os "baselines" aprovados.
+
 ---
 
 ## 4. Como Executar os Testes
 
-| Cenário                 | Comando                    |
-|-------------------------|----------------------------|
-| Executar Tudo (CI)      | `npm run test:all`         |
-| Testes de API           | `npm run test:api`         |
-| Testes Web (BDD)        | `npm run test:e2e`         |
-| Testes Mobile           | `npm run test:mobile`      |
-| Teste de Performance    | `npm run k6:run`           |
-| Modo Playwright         | `npx playwright test --ui` |
-| Teste de Acessibilidade | `npm run test:a11y`        |
+| Cenário                 | Comando                     |
+|-------------------------|-----------------------------|
+| Executar Tudo (CI)      | `npm run test:all`          |
+| Testes de API           | `npm run test:api`          |
+| Testes Web (BDD)        | `npm run test:e2e`          |
+| Testes Mobile           | `npm run test:mobile`       |
+| Teste de Performance    | `npm run k6:run`            |
+| Modo Playwright         | `npx playwright test --ui`  |
+| Teste de Acessibilidade | `npm run test:a11y`         |
+| Regressão Visual        | `npm run test:visual`       |
+| Atualiza a base de imgs | `npm run test:visual:update`|
 
 ---
 
