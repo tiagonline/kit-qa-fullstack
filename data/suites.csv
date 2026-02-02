@@ -1,0 +1,33 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"Como um cliente do e-commerce
+  Quero acessar minha conta
+  Para realizar compras de produtos geek","353","Login com sucesso (Fluxo Positivo)","","Mon Feb 02 14:23:47 UTC 2026","passed","Mon Feb 02 14:23:48 UTC 2026","","","",""
+"Como um cliente do e-commerce
+  Quero acessar minha conta
+  Para realizar compras de produtos geek","343","Tentativa de login com falha (Fluxos Negativos)","","Mon Feb 02 14:23:48 UTC 2026","passed","Mon Feb 02 14:23:49 UTC 2026","","","",""
+"","531","POST /posts - Payload Malformado","E2E","Mon Feb 02 14:23:36 UTC 2026","passed","Mon Feb 02 14:23:37 UTC 2026","Testes de API - Fluxo CRUD Completo & Cenários Negativos > Cenários Negativos","","",""
+"Como um cliente do e-commerce
+  Quero acessar minha conta
+  Para realizar compras de produtos geek","339","Tentativa de login com falha (Fluxos Negativos)","","Mon Feb 02 14:23:48 UTC 2026","passed","Mon Feb 02 14:23:48 UTC 2026","","","",""
+"","666","Mobile - Validar a Responsividade da Home Swag Labs num pixel 5","Mobile","Mon Feb 02 14:23:25 UTC 2026","passed","Mon Feb 02 14:23:26 UTC 2026","","","",""
+"Como um usuário logado
+  Quero finalizar a compra de itens do carrinho
+  Para receber os produtos em minha casa","722","Compra realizada com sucesso (Fluxo Positivo)","","Mon Feb 02 14:23:46 UTC 2026","passed","Mon Feb 02 14:23:46 UTC 2026","","","",""
+"","28","GET /posts/:id - Deve consultar a postagem e validar o contrato","E2E","Mon Feb 02 14:23:35 UTC 2026","passed","Mon Feb 02 14:23:35 UTC 2026","Testes de API - Fluxo CRUD Completo & Cenários Negativos","","",""
+"","20","GET /invalid-route - Rota Inexistente","E2E","Mon Feb 02 14:23:37 UTC 2026","passed","Mon Feb 02 14:23:37 UTC 2026","Testes de API - Fluxo CRUD Completo & Cenários Negativos > Cenários Negativos","","",""
+"Como um cliente
+  Quero favoritar produtos
+  Para comprar mais tarde","395","Adicionar produto aos favoritos (Reuso de Login)","","Mon Feb 02 14:23:47 UTC 2026","passed","Mon Feb 02 14:23:47 UTC 2026","","","",""
+"","21","GET /posts/999999 - ID Inexistente (404)","E2E","Mon Feb 02 14:23:36 UTC 2026","passed","Mon Feb 02 14:23:36 UTC 2026","Testes de API - Fluxo CRUD Completo & Cenários Negativos > Cenários Negativos","","",""
+"","869","PUT /posts/:id - Deve atualizar a postagem integralmente","E2E","Mon Feb 02 14:23:35 UTC 2026","passed","Mon Feb 02 14:23:36 UTC 2026","Testes de API - Fluxo CRUD Completo & Cenários Negativos","","",""
+"Como um cliente do e-commerce
+  Quero acessar minha conta
+  Para realizar compras de produtos geek","334","Tentativa de login com falha (Fluxos Negativos)","","Mon Feb 02 14:23:48 UTC 2026","passed","Mon Feb 02 14:23:48 UTC 2026","","","",""
+"Como um usuário logado
+  Quero finalizar a compra de itens do carrinho
+  Para receber os produtos em minha casa","525","Tentar finalizar compra sem dados de entrega (Fluxo Negativo)","","Mon Feb 02 14:23:46 UTC 2026","passed","Mon Feb 02 14:23:47 UTC 2026","","","",""
+"","533","DELETE /posts/:id - Deve remover a postagem","E2E","Mon Feb 02 14:23:36 UTC 2026","passed","Mon Feb 02 14:23:36 UTC 2026","Testes de API - Fluxo CRUD Completo & Cenários Negativos","","",""
+"","1642","POST /posts - Deve criar uma nova postagem e validar o contrato (Schema)","E2E","Mon Feb 02 14:23:33 UTC 2026","passed","Mon Feb 02 14:23:35 UTC 2026","Testes de API - Fluxo CRUD Completo & Cenários Negativos","","",""
+"","3444","Deve garantir o layout do Inventário","Visual Regression","Mon Feb 02 14:23:47 UTC 2026","passed","Mon Feb 02 14:23:50 UTC 2026","Regressão Visual","","",""
+"","793","Deve garantir o layout da Login Page","Visual Regression","Mon Feb 02 14:23:46 UTC 2026","passed","Mon Feb 02 14:23:46 UTC 2026","Regressão Visual","","",""
+"","27","Simulação de Falha de Autenticação (Header Inválido)","E2E","Mon Feb 02 14:23:37 UTC 2026","passed","Mon Feb 02 14:23:37 UTC 2026","Testes de API - Fluxo CRUD Completo & Cenários Negativos > Cenários Negativos","","",""
