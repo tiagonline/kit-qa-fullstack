@@ -46,26 +46,28 @@ O projeto utiliza uma arquitetura modular baseada em **TypeScript**, focada em e
 ### 1.2 Estrutura de Pastas
 ```text
 kit-qa-fullstack/
-├── .github/workflows/   # Pipeline de CI/CD (GitHub Actions)
-├── envs/                # Distinção da execução dos testes por ambientes
-│   ├── .env.dev
-│   ├── .env.hmg
-│   └── .env.prd
-├── pages/               # Page Objects (Encapsulamento de elementos e ações)
-├── tests/
-|   ├── accessibility/   # Testes de acessibilidade WACG (POC)
-│   ├── api/             # Testes de API e Contrato (Playwright + Faker + ZOD)
-│   ├── e2e/             # Testes de Ponta a Ponta (Cucumber)
-│   │   ├── features/    # Especificações de negócio (Gherkin)
-│   │   ├── steps/       # Implementação técnica dos passos (TypeScript)
-│   │   ├── support/     # Hooks e configurações globais do Cucumber
-│   │   └── extra/       # Testes complementares (Playwright Native)
-│   ├── mobile/          # Testes de responsividade mobile (Playwright)
-|   ├── visual/          # Testes de regressão visual (Playwright)                   
-│   └── k6-load/         # Testes de performance e carga (K6 + Docker + Grafana)
-├── playwright-report/   # Evidências de execução local
-├── .github/workflows/   # Pipeline paralela (GitHub Actions)
-└── playwright.config.ts # Configuração centralizada do Playwright
+├── .github/workflows/     # Pipeline de CI/CD (GitHub Actions com Jobs Paralelos)
+├── envs/                  # Configurações de Ambiente (Variáveis)
+│   ├── .env.dev           # Variáveis de Desenvolvimento
+│   ├── .env.hmg           # Variáveis de Homologação
+│   └── .env.prd           # Variáveis de Produção
+├── pages/                 # Page Objects (Mapeamento de elementos e ações reutilizáveis)
+├── tests/                 # Suíte de Testes Automatizados
+│   ├── accessibility/     # Testes de Acessibilidade (Axe-Core / WCAG 2.1)
+│   ├── api/               # Testes de API Rest (Playwright Request + Zod Schema)
+│   ├── e2e/               # Testes Ponta a Ponta BDD (Cucumber + Playwright)
+│   │   ├── extra/         # Testes E2E Nativos (Sem Cucumber)
+│   │   ├── features/      # Especificações de Negócio em Gherkin (.feature)
+│   │   ├── steps/         # Step Definitions (Implementação em TypeScript)
+│   │   └── support/       # Hooks (Setup/Teardown) e Configurações Globais
+│   ├── k6-load/           # Testes de Carga e Performance (K6 + Docker + Grafana)
+│   ├── mobile/            # Testes de Responsividade Mobile (Emulação de Dispositivos)
+│   └── visual/            # Testes de Regressão Visual (Snapshot Testing / Pixelmatch)
+├── categories.json        # Classificação de erros para o Relatório Allure
+├── cucumber.js            # Configuração do Runner do Cucumber
+├── environment.properties # Metadados do ambiente para o Relatório Allure
+├── package.json           # Dependências e Scripts de Execução
+└── playwright.config.ts   # Configuração Central do Framework Playwright
 ```
 
 ---
