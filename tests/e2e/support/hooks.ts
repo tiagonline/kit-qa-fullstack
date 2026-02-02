@@ -4,11 +4,7 @@ import { PageManager } from '../../../pages/PageManager';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// 👇 O PULO DO GATO: Carrega as variáveis do arquivo envs/.env.dev
 dotenv.config({ path: path.resolve(process.cwd(), 'envs/.env.dev') });
-
-console.log('BASE_URL carregada:', process.env.BASE_URL);
-console.log('USUARIO carregado:', process.env.SAUCE_USERNAME);
 
 let browser: Browser;
 let context: BrowserContext;
@@ -27,13 +23,13 @@ BeforeAll(async function () {
 Before(async function () {
   context = await browser.newContext({
     baseURL: process.env.BASE_URL, // Lê do .env.dev
-    ignoreHTTPSErrors: true // 🔓 Destrava o acesso na rede corporativa
+    ignoreHTTPSErrors: true // Destrava o acesso na rede corporativa
   });
   
   page = await context.newPage();
   this.page = page;
   
-  // 🏗️ Inicializa o Page Objects para os testes usarem
+  // Inicializa o Page Objects para os testes usarem
   this.pageManager = new PageManager(this.page);
 });
 
