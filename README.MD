@@ -4,7 +4,7 @@
 
 <div align="center">
 
-<a href="https://tiagonline.github.io/kit-qa-fullstack/k6-report/" target="_blank">
+<a href="https://tiagonline.github.io/kit-qa-fullstack/k6/" target="_blank">
   <img src="https://img.shields.io/badge/K6-Performance%20Dashboard-7D64FF?style=for-the-badge&logo=k6&logoColor=white" alt="K6 Report"/>
 </a>
 
