@@ -1,6 +1,7 @@
 import { test, expect, APIRequestContext } from '@playwright/test';
 import { faker } from '@faker-js/faker';
 import { z } from 'zod';
+import { allure } from "allure-playwright";
 
 // Definindo o "Contrato" (Schema) da postagem
 const postSchema = z.object({

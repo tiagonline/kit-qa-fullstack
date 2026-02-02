@@ -22,7 +22,7 @@
     "test:api:dev": "dotenv -e envs/.env.dev -- npx playwright test tests/api",
     "test:api:hmg": "dotenv -e envs/.env.hmg -- npx playwright test tests/api",
     "test:e2e:prd": "dotenv -e envs/.env.prd -- npx cucumber-js --tags '@smoke'",
-    "report:generate": "copyfiles environment.properties categories.json allure-results/ && allure generate allure-results --clean -o allure-report",
+    "report:generate": "cp environment.properties categories.json allure-results/ || true && allure generate allure-results --clean -o allure-report",
     "report:open": "allure open allure-report",
     "test:report": "npm run test:e2e ; npm run report:generate && npm run report:open",
     "test:visual": "npx playwright test --project='Visual Regression'",
