@@ -1,18 +1,18 @@
-import { Given, When, Then } from '@cucumber/cucumber';
+import { When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { PageManager } from '../../../pages/PageManager';
 
-Given('que estou logado na loja', async function () {
-  this.pageManager = new PageManager(this.page);
-  await this.pageManager.login.navigate();
-  await this.pageManager.login.performLogin('standard_user', 'secret_sauce');
+// O passo "Dado que estou logado" é puxado do checkout.steps.ts automaticamente.
+
+When('favoritado o produto {string}', async function (produto) {
+  // Como a loja não tem "Favoritos" real, simulamos adicionando ao carrinho
+  // ou verificamos se o botão virou "Remove"
+  if (!this.pageManager) this.pageManager = new PageManager(this.page);
+  await this.pageManager.inventory.addItemToCart(produto); 
 });
 
-When('eu adiciono o produto {string} aos favoritos', async function (produto) {
-  await this.pageManager.inventory.addToCart(produto); 
-});
-
-Then('o botão do produto deve mudar para {string}', async function (textoBotao) {
-  const button = this.page.locator(`[data-test="remove-${textoBotao.toLowerCase().replace(/ /g, '-')}"]`);
-  await expect(button).toBeVisible();
+Then('o ícone de favorito deve estar ativo para o produto {string}', async function (produto) {
+  // Validamos se o botão mudou para "REMOVE", indicando que foi selecionado
+  const buttonRemove = this.page.locator(`[data-test="remove-${produto.toLowerCase().replace(/ /g, '-')}"]`);
+  await expect(buttonRemove).toBeVisible();
 });
