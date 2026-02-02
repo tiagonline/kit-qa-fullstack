@@ -8,12 +8,12 @@ module.exports = {
     format: [
       "progress-bar",                    // Barra no terminal
       "html:cucumber-report.html",       // Relatório HTML simples
-      "allure-cucumberjs/reporter"       // Allure (sem o caminho aqui!)
+      "allure-cucumberjs/reporter"       // Allure
     ],
     
     formatOptions: {
       colorsEnabled: true,
-      resultsDir: "allure-results",      // <--- O caminho correto fica aqui
+      resultsDir: "allure-results",      // Diretório dos resultados do Allure
       dummyFormat: false                 // Workaround para alguns terminais
     }
   },
