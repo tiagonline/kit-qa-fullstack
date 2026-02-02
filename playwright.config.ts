@@ -51,7 +51,7 @@ export default defineConfig({
     },
     {
       name: "Visual Regression",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], animations: "disabled" },
       testMatch: '**/visual/*.spec.ts', 
     },
   ],
