@@ -7,8 +7,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+# Permissões necessárias para o deploy no GitHub Pages via Token
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -17,7 +18,7 @@ jobs:
   # PARTE 1: RODAR TESTES (PARALELO)
   # ==================================================================
 
-  # 1. API TESTS (Gera Allure JSONs)
+  # 1. API TESTS
   api-tests:
     name: ⚡ API Tests
     runs-on: ubuntu-latest
@@ -33,7 +34,6 @@ jobs:
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
 
-      # Salva resultados para o Allure
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -41,7 +41,7 @@ jobs:
           path: allure-results/
           retention-days: 1
 
-  # 2. E2E TESTS (Gera Allure JSONs)
+  # 2. E2E TESTS (Cucumber)
   e2e-tests:
     name: 🖥️ E2E Tests
     runs-on: ubuntu-latest
@@ -61,6 +61,7 @@ jobs:
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
       
+      # Upload do JSON para o Allure
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -68,7 +69,15 @@ jobs:
           path: allure-results/
           retention-days: 1
 
-  # 3. MOBILE TESTS (Gera Allure JSONs)
+      # Upload do HTML do Cucumber (Para o link direto)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cucumber-report-html
+          path: cucumber-report.html
+          retention-days: 1
+
+  # 3. MOBILE TESTS
   mobile-tests:
     name: 📱 Mobile Tests
     runs-on: ubuntu-latest
@@ -91,11 +100,10 @@ jobs:
           path: allure-results/
           retention-days: 1
 
-  # 4. VISUAL TESTS (NOVO - Gera Allure JSONs)
+  # 4. VISUAL TESTS
   visual-tests:
     name: 🎨 Visual Regression
     runs-on: ubuntu-latest
-    # Usa container oficial para garantir que as fontes (fonts) sejam iguais ao local
     container:
       image: mcr.microsoft.com/playwright:v1.40.0-jammy
     steps:
@@ -103,7 +111,6 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 18 }
       - run: npm ci
-      # Nota: Container já vem com browsers instalados
       
       - name: Run Visual Tests
         run: npx playwright test --project='Visual Regression'
@@ -117,7 +124,7 @@ jobs:
           path: allure-results/
           retention-days: 1
 
-  # 5. LOAD TESTS (K6 separado)
+  # 5. LOAD TESTS (K6)
   load-tests:
     name: 🚀 K6 Load
     runs-on: ubuntu-latest
@@ -137,10 +144,11 @@ jobs:
         env:
           K6_BASE_URL: ${{ secrets.K6_BASE_URL }}
 
-      - name: Move Report
+      - name: Prepare K6 Report
         if: always()
         run: |
           mkdir -p k6-temp
+          # Garante que pegamos o relatório onde quer que ele tenha sido gerado
           mv tests/k6-load/dist/report.html k6-temp/index.html || mv report.html k6-temp/index.html
 
       - uses: actions/upload-artifact@v4
@@ -151,72 +159,86 @@ jobs:
           retention-days: 1
 
   # ==================================================================
-  # PARTE 2: DEPLOY UNIFICADO
+  # PARTE 2: DEPLOY UNIFICADO (ALLURE + CUCUMBER + K6)
   # ==================================================================
   report-deploy:
     name: 📊 Publish Unified Report
     if: always()
-    # Espera TODOS os testes acabarem
     needs: [api-tests, e2e-tests, mobile-tests, visual-tests, load-tests]
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get Allure history
-        uses: actions/checkout@v4
-        continue-on-error: true
-        with:
-          ref: gh-pages
-          path: gh-pages-history
-
-      # 1. Baixa TUDO (API, E2E, Mobile, Visual, K6)
+      # 1. Baixa todos os artefatos gerados pelos jobs anteriores
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      # 2. Consolida os resultados do Allure (Junta os JSONs numa pasta só)
+      # 2. Consolida os resultados do Allure
       - name: Merge Allure Results
         run: |
           mkdir -p allure-results
-          # Copia resultados de todos os jobs para a pasta final
           cp artifacts/allure-api/* allure-results/ || true
           cp artifacts/allure-e2e/* allure-results/ || true
           cp artifacts/allure-mobile/* allure-results/ || true
           cp artifacts/allure-visual/* allure-results/ || true
+          
+          # Copia as configs de ambiente para o Allure
+          cp environment.properties allure-results/ || true
+          cp categories.json allure-results/ || true
 
-      # 3. Gera UM relatório Allure contendo TUDO
+      # 3. Gera o Relatório HTML do Allure
       - name: Generate Unified Allure Report
         uses: simple-elf/allure-report-action@master
         with:
           allure_results: allure-results
-          allure_history: gh-pages-history/allure-history
+          allure_history: allure-history
           keep_reports: 20
 
-      # 4. Organiza pasta Public (Allure Unificado na raiz + K6 na subpasta)
-      - name: Organize Reports
+      # 4. Organiza a pasta PUBLIC (que vai para o site)
+      - name: Organize Reports for Web
         run: |
-          mkdir -p public/k6-report
+          mkdir -p public
           
-          # Allure na Raiz (Copia do output gerado: allure-report)
+          # --- A. Allure na Raiz ---
           cp -r allure-report/* public/
           
-          # K6 na subpasta
-          cp -r artifacts/k6-report/* public/k6-report/
+          # --- B. K6 na subpasta /k6 ---
+          mkdir -p public/k6
+          cp -r artifacts/k6-report/* public/k6/
+          
+          # --- C. Cucumber na subpasta /cucumber ---
+          mkdir -p public/cucumber
+          # Renomeia para index.html para abrir direto no link
+          mv artifacts/cucumber-report-html/cucumber-report.html public/cucumber/index.html
 
-      # 5. Deploy para GitHub Pages
-      - name: Deploy to Github Pages
-        uses: peaceiris/actions-gh-pages@v3
+      # 5. Prepara o upload para o GitHub Pages
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: public
-          force_orphan: true
+          path: public
 
-      # 6. Tabela com Links no Resumo
+      # 6. Deploy Oficial
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      # 7. Resumo com Links Dinâmicos
       - name: 📢 Summary Links
         run: |
+          # URL base do GitHub Pages
+          PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          
           echo "### 📊 Central de Relatórios Unificada" >> $GITHUB_STEP_SUMMARY
-          echo "| Tipo de Teste | Visualizar |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| 🏅 **QA Dashboard (E2E + API + Mobile + Visual)** | [**Ver Allure Report**](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}) |" >> $GITHUB_STEP_SUMMARY
-          echo "| 🚀 **Performance (K6)** | [**Ver K6 Dashboard**](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/k6-report/) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Tipo de Teste | Status | Link de Acesso |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏅 **QA Dashboard (Geral)** | ✅ Gerado | [**Ver Allure Report**]($PAGES_URL/) |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🥒 **E2E (Detalhado)** | ✅ Gerado | [**Ver Cucumber BDD**]($PAGES_URL/cucumber/) |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🚀 **Performance (K6)** | ✅ Gerado | [**Ver K6 Metrics**]($PAGES_URL/k6/) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> *Nota: Se a página der 404 nos primeiros segundos, aguarde o deploy finalizar.*" >> $GITHUB_STEP_SUMMARY
