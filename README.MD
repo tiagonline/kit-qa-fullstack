@@ -1,6 +1,6 @@
 # Kit QA - Automação Full Stack
 
-> Projeto de automação de testes "End-to-End" simulando um ambiente real de produção. O projeto abrange testes de API e contrato, Interface Web (BDD), Mobile (Emulação), Acessibilidade(WCAG) e Performance (Carga).
+> Projeto de automação de testes "End-to-End" simulando um ambiente real de produção. O projeto abrange testes de API e contrato, Interface Web (BDD), Mobile (Emulação), Regressão Visual, Acessibilidade(WCAG) e Performance (Carga).
 
 <div align="center">
 
