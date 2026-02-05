@@ -7,7 +7,7 @@ export class InventoryPage extends BasePage {
   private readonly inventoryContainer = "#inventory_container";
   private readonly title = ".title";
   private readonly hamburgerMenu = "#react-burger-menu-btn";
-  private readonly cartIcon = ".shopping_cart_link";
+  private readonly cartIcon = ".shopping_cart_link"; // O ícone clicável
   private readonly inventoryItem = ".inventory_item";
   private readonly inventoryItemName = ".inventory_item_name";
   private readonly inventoryItemDesc = ".inventory_item_desc";
@@ -28,17 +28,23 @@ export class InventoryPage extends BasePage {
     await this.page.waitForSelector(this.inventoryContainer, { state: 'visible', timeout: 10000 });
   }
 
-  // --- AÇÃO: ADICIONAR AO CARRINHO (Novo Método) ---
+  // --- AÇÃO: ADICIONAR AO CARRINHO ---
   async addItemToCart(productName: string) {
     console.log(`[Inventory] Adicionando '${productName}' ao carrinho...`);
-    
-    // Localiza o item pelo texto do nome
     const item = this.page.locator(this.inventoryItem, { hasText: productName });
     await expect(item).toBeVisible();
-
-    // Encontra o botão "Add to cart" DENTRO desse item específico
     const addToCartBtn = item.locator("button[id^='add-to-cart']");
     await addToCartBtn.click();
+  }
+
+  // --- AÇÃO: IR PARA O CARRINHO (O que faltava!) ---
+  async goToCart() {
+    console.log("[Inventory] Navegando para o Carrinho...");
+    await this.smartClick(this.cartIcon, "Ícone do Carrinho");
+    
+    // Espera explícita pela URL e pelo container do carrinho
+    await this.page.waitForURL(/.*cart\.html/);
+    await this.page.waitForSelector(".cart_list", { state: 'visible' });
   }
 
   // --- COMPONENTES PRINCIPAIS ---
