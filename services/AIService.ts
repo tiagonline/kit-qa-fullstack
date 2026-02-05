@@ -1,28 +1,19 @@
 import ModelClient from "@azure-rest/ai-inference";
 import { AzureKeyCredential } from "@azure/core-auth";
 
-type AzureModelClient = ReturnType<typeof ModelClient>;
-
 export class AIService {
-  // Usei 'any' aqui pois a tipagem do @azure-rest às vezes conflita com versões de TS, 
-  // mas em produção poderíamos criar uma interface.
-  private client: AzureModelClient;
+  private client: any;
 
   constructor() {
-    // Eu utilizo o token que você acabou de validar no terminal
     const token = process.env.GITHUB_AI_TOKEN || "";
     const endpoint = "https://models.inference.ai.azure.com";
 
-    // Inicialização robusta do cliente Azure AI
     this.client = ModelClient(endpoint, new AzureKeyCredential(token));
   }
 
   async analyzeFailure(errorMessage: string, domSnapshot: string): Promise<string> {
     if (!process.env.GITHUB_AI_TOKEN) return "IA desativada: Token não configurado.";
 
-    // PROMPT ENGINEERING (O Diferencial da Vaga):
-    // Instruímos a IA a ser concisa e, CRUCIALMENTE, a formatar o seletor entre crases
-    // para que o Regex do BasePage consiga extrair e fazer o Self-Healing funcionar.
     const systemPrompt = `
       Você é um Arquiteto de Testes de Software (QA Sênior).
       Sua tarefa é analisar erros de Playwright em testes E2E.
@@ -35,9 +26,6 @@ export class AIService {
     `;
 
     try {
-      // Ajuste Sênior: Aumentei para 20.000 chars. 
-      // Como já limpamos scripts/styles no Hook, 20k chars é puro HTML estrutural,
-      // garantindo que a IA veja o rodapé ou modais de erro.
       const truncatedDom = domSnapshot.slice(0, 20000);
 
       const response = await this.client.path("/chat/completions").post({
@@ -47,18 +35,23 @@ export class AIService {
             { role: "user", content: `Erro: ${errorMessage}\n\nDOM Context:\n${truncatedDom}` }
           ],
           model: "gpt-4o",
-          temperature: 0.1 // Temperatura baixa para respostas mais determinísticas (menos criativas, mais precisas)
+          temperature: 0.1
         }
       });
 
-      if (response.status !== 200) {
+      if (response.status !== "200") {
         console.error(`[AIService] Erro na API: ${response.status}`);
         return "Falha na comunicação com GitHub Models.";
       }
 
-      return response.body?.choices?.[0]?.message?.content || "Resposta vazia da IA";
+      // CORREÇÃO TS2339:
+      // O TypeScript não infere automaticamente que 'choices' existe só pelo if acima.
+      // Usamos 'as any' para acessar a propriedade com segurança após a validação do status.
+      const data = response.body as any;
+      
+      return data.choices?.[0]?.message?.content || "Sem resposta da IA.";
 
-    } catch (error) {
+    } catch (error: any) {
       console.error(`[AIService] Exception: ${error.message}`);
       return "Erro interno no serviço de IA.";
     }
