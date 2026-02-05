@@ -56,7 +56,7 @@ export class AIService {
         return "Falha na comunicação com GitHub Models.";
       }
 
-      return response.body.choices[0].message.content;
+      return response.body?.choices?.[0]?.message?.content || "Resposta vazia da IA";
 
     } catch (error) {
       console.error(`[AIService] Exception: ${error.message}`);
