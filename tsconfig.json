@@ -6,6 +6,13 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     
+    // Configurações de Path Mapping para imports limpos
+    "baseUrl": ".",
+    "paths": {
+      "services/*": ["services/*"],
+      "pages/*": ["pages/*"]
+    },
+
     // Permite importar arquivos terminando em .ts
     "allowImportingTsExtensions": true,
     // Garante que o ts-node rode em memória sem tentar criar arquivos .js físicos

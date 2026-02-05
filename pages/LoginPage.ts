@@ -1,9 +1,8 @@
 import { Page } from "@playwright/test";
-import { BasePage } from "./BasePages.ts";
+import { BasePage } from "./BasePages"; // Remova o .ts do import se der erro
 import { AIService } from "../services/AIService";
 
 export class LoginPage extends BasePage {
-  // Eu mantive os seletores originais do seu projeto
   private readonly usernameInput = "#user-name";
   private readonly passwordInput = "#password";
   private readonly loginButton = "#login-button";
@@ -12,13 +11,34 @@ export class LoginPage extends BasePage {
     super(page, ai);
   }
 
-  async login(user: string, pass: string) {
-    // Eu uso o navigate sem argumentos para ir à BASE_URL definida no .env
-    await this.navigate(); 
-    await this.page.fill(this.usernameInput, user);
-    await this.page.fill(this.passwordInput, pass);
+  // Renomeei para performLogin para bater com o seu step
+  async performLogin(user: string, pass: string) {
+    // REMOVI O this.navigate() DAQUI! 
+    // Quem navega é o Step 'Given', não a ação de logar.
     
-    // Eu aplico o smartClick aqui para garantir que o login nunca quebre por ID alterado
-    await this.smartClick(this.loginButton, "Botão de Login Principal");
+    try {
+        console.log(`[Login] Preenchendo credenciais...`);
+        
+        // Espera o campo estar pronto (visível e não animado)
+        await this.page.waitForSelector(this.usernameInput, { state: 'visible', timeout: 10000 });
+        
+        await this.page.fill(this.usernameInput, user);
+        await this.page.fill(this.passwordInput, pass);
+        
+        await this.smartClick(this.loginButton, "Botão de Login Principal");
+        
+    } catch (error) {
+        console.error(`[Login] Erro na interação: ${error.message}`);
+        throw error;
+    }
+  }
+
+  async validateErrorMessage(message: string) {
+     const errorContainer = "[data-test='error']";
+     await this.page.waitForSelector(errorContainer);
+     const text = await this.page.textContent(errorContainer);
+     if (!text?.includes(message)) {
+         throw new Error(`Esperava erro "${message}", mas veio "${text}"`);
+     }
   }
 }
