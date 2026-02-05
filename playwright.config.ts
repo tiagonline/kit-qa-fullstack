@@ -2,13 +2,24 @@ import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Carrega variáveis de ambiente (igual fizemos no hooks)
+// Carrega variáveis de ambiente
 dotenv.config({ path: path.resolve(__dirname, 'envs/.env.dev') });
 
 export default defineConfig({
   testDir: './tests',
   timeout: 60000,
-  expect: { timeout: 10000 },
+  
+  // 👇 AQUI ESTÁ A CORREÇÃO VISUAL
+  expect: { 
+    timeout: 10000,
+    toHaveScreenshot: {
+      // Aceita até 5% de diferença de pixels (Crucial para CI vs Local)
+      maxDiffPixelRatio: 0.05,
+      // Ignora diferenças muito sutis de cor (anti-aliasing de fontes)
+      threshold: 0.2,
+    }
+  },
+
   fullyParallel: true,
   reporter: [['html'], ['allure-playwright']],
   
@@ -17,16 +28,15 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     ignoreHTTPSErrors: true,
-    locale: 'en-US', // Força inglês para evitar tradução
+    locale: 'en-US', 
     
-    // --- A MÁGICA QUE FALTAVA ---
-    // Repassamos as mesmas configurações blindadas do Cucumber para o Playwright nativo
+    // Configurações blindadas para rodar liso no Docker/Linux
     launchOptions: {
       args: [
         "--disable-gpu",
         "--no-sandbox",
         "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage", // Vital para Linux/Docker
+        "--disable-dev-shm-usage",
         "--no-zygote",
         "--disable-features=Translate,TranslateUI,OptimizationHints,MediaRouter",
         "--disable-extensions",
@@ -35,18 +45,18 @@ export default defineConfig({
     }
   },
 
-projects: [
+  projects: [
     // 1. Suíte E2E Principal (Desktop)
-    // Pega todos os .spec.ts dentro de 'e2e', exceto os visuais/mobile/steps
     {
       name: 'E2E Web',
       testMatch: ['tests/e2e/**/*.spec.ts'], 
       testIgnore: ['**/*.visual.spec.ts', '**/*.mobile.spec.ts', '**/steps/*.ts'],
       use: { 
         ...devices['Desktop Chrome'],
-        channel: 'chrome', // Força usar o Chrome real se disponível
+        channel: 'chrome', 
       },
     },
+
     // 2. Testes de Regressão Visual (Snapshot Testing)
     {
       name: 'Visual Regression',
@@ -66,7 +76,7 @@ projects: [
       name: 'API',
       testMatch: /.*api.spec.ts/,
       use: { 
-        viewport: null // Economiza recursos pois não abre janela
+        viewport: null 
       }
     }
   ],
