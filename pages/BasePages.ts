@@ -42,7 +42,13 @@ export class BasePage {
           return clone.innerHTML;
       });
 
-      const analysis = await this.ai.analyzeFailure(error.message, cleanDom);
+      const failureMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+            ? error
+            : JSON.stringify(error);
+      const analysis = await this.ai.analyzeFailure(failureMessage, cleanDom);
       const suggestedSelector = analysis.match(/`([^`]+)`/)?.[1];
 
       if (suggestedSelector) {
