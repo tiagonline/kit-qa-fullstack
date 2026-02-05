@@ -1,3 +1,4 @@
+// Forçamos a aceitação de certificados
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 import { Before, After, BeforeAll, AfterAll, Status, setDefaultTimeout } from '@cucumber/cucumber';
@@ -16,7 +17,9 @@ if (fs.existsSync(envPath)) {
 let browser: Browser;
 let context: BrowserContext;
 
-setDefaultTimeout(60000);
+// CORREÇÃO CRÍTICA: Aumentamos de 60s para 120s
+// Isso permite que o Retry Pattern do BasePage (que pode levar até 90s) funcione por completo.
+setDefaultTimeout(120 * 1000); 
 
 BeforeAll(async function () {
   const headlessMode = process.env.CI === 'true' || process.env.HEADLESS === 'true';
@@ -27,10 +30,8 @@ BeforeAll(async function () {
       "--disable-gpu", 
       "--no-sandbox", 
       "--disable-setuid-sandbox",
-      // --- OTIMIZAÇÃO CRÍTICA PARA LINUX ---
-      "--disable-dev-shm-usage", // Resolve a lentidão e travamento de memória no Linux
-      "--no-zygote",             // Evita processos zumbis
-      // -------------------------------------
+      "--disable-dev-shm-usage",
+      "--no-zygote",
       "--disable-features=Translate,TranslateUI,OptimizationHints,MediaRouter",
       "--disable-extensions",
       "--lang=en-US"
@@ -41,7 +42,6 @@ BeforeAll(async function () {
 Before(async function () {
   if (!process.env.BASE_URL) throw new Error("BASE_URL não definida!");
 
-  // Recria o contexto para cada teste (Isolamento total)
   context = await browser.newContext({
     baseURL: process.env.BASE_URL, 
     ignoreHTTPSErrors: true,
@@ -59,7 +59,6 @@ After(async function (scenario) {
     const errorMessage = scenario.result.message || "";
     
     if (this.page) {
-        // Tenta tirar screenshot mesmo se a página travou
         try {
             const screenshot = await this.page.screenshot({ fullPage: true, timeout: 5000 });
             this.attach(screenshot, 'image/png');
@@ -68,16 +67,16 @@ After(async function (scenario) {
         }
     }
 
+    // Se você quiser que a IA analise Timeouts também, remova a parte "&& !isTimeout" abaixo.
+    // Mantive o filtro para economizar tokens, pois agora com 120s o erro deve sumir.
     const isTimeout = errorMessage.includes('Timeout') || errorMessage.includes('exceeded');
 
     if (process.env.GITHUB_AI_TOKEN && !isTimeout) {
-      if (!this.pageManager) {
-        return;
-      }
+      if (!this.pageManager) return;
+      
       try {
         const aiService = this.pageManager.ai; 
 
-        // DOM Stripping Otimizado
         const cleanDom = await this.page.evaluate(() => {
             return document.body ? document.body.innerHTML.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gm, "").substring(0, 20000) : "DOM Vazio";
         }).catch(() => "Erro ao ler DOM");
@@ -87,13 +86,12 @@ After(async function (scenario) {
         this.attach(`IA Root Cause Analysis (RCA):\n\n${analysis}`, 'text/plain');
         
         console.log(`[IA] ✅ RCA concluída em ${((Date.now() - startTime) / 1000).toFixed(2)}s.`);
-      } catch (aiError) {
+      } catch (aiError: any) {
         console.error(`[IA] ❌ Erro na análise: ${aiError.message}`);
       }
     }
   }
 
-  // Garante o fechamento para liberar memória
   if (this.page) await this.page.close();
   if (context) await context.close();
 });

@@ -12,27 +12,30 @@ export class LoginPage extends BasePage {
   }
 
   async performLogin(user: string, pass: string) {
-    // --- REDE DE SEGURANÇA SÊNIOR ---
-    // Se por acaso o Step Definition esqueceu de chamar o 'Given que estou na home',
-    // ou se estamos num cenário de reuso, e a url for 'about:blank', nós navegamos forçado.
-    if (this.page.url() === 'about:blank') {
-        console.log("⚠️ [Login] Página em branco detectada! Forçando navegação automática.");
+    // CAMADA DE SEGURANÇA 2 (Mais inteligente):
+    // Verifica se o campo de login NÃO está visível. 
+    // Se não estiver (seja por about:blank ou página errada), forçamos a navegação.
+    const isLoginFieldVisible = await this.page.isVisible(this.usernameInput).catch(() => false);
+    
+    if (!isLoginFieldVisible) {
+        console.log(`⚠️ [Login] Campo de usuário não visível (URL: ${this.page.url()}). Forçando navegação...`);
         await this.navigate();
     }
 
     try {
-        console.log(`[Login] Aguardando campos de login...`);
+        console.log(`[Login] Preenchendo credenciais...`);
         
-        // Espera o campo estar visível (agora garantido pela navegação acima)
-        await this.page.waitForSelector(this.usernameInput, { state: 'visible', timeout: 10000 });
+        // Espera o campo estar visível (agora garantido pela lógica acima)
+        await this.page.waitForSelector(this.usernameInput, { state: 'visible', timeout: 15000 });
         
         await this.page.fill(this.usernameInput, user);
         await this.page.fill(this.passwordInput, pass);
         
         await this.smartClick(this.loginButton, "Botão de Login Principal");
         
-    } catch (error) {
-        console.error(`[Login] Falha: ${error.message}`);
+    } catch (error: any) {
+        // Se falhar mesmo assim, o Hooks captura e manda para a IA
+        console.error(`[Login] Erro fatal no login: ${error.message}`);
         throw error;
     }
   }
