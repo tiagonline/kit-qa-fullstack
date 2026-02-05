@@ -12,6 +12,7 @@ yarn-error.log*
 # Segurança & Ambiente
 # ----------------------
 .env
+.env.dev
 .env.*local
 .env.test
 envs/.env.*

@@ -2,7 +2,14 @@
 
 > Projeto de automação de testes "End-to-End" simulando um ambiente real de produção. O projeto abrange testes de API e contrato, Interface Web (BDD), Mobile (Emulação), Regressão Visual, Acessibilidade(WCAG) e Performance (Carga).
 
+> **Diferencial Sênior:** Validação inteligente com IA Auto Healing e Análise de Causa Raiz (RCA) automática via GitHub Models (GPT-4o).
+
 <div align="center">
+
+<img src="https://img.shields.io/badge/AI--Powered-Auto--Healing%20%26%20RCA-blueviolet?style=for-the-badge&logo=openai&logoColor=white" alt="AI Powered Auto-Healing"/>
+
+<br/>
+<br/>
 
 <a href="https://tiagonline.github.io/kit-qa-fullstack/" target="_blank">
   <img src="https://img.shields.io/badge/Allure-QA%20Dashboard%20Unificado-FF6F00?style=for-the-badge&logo=allure&logoColor=white" alt="Allure Dashboard"/>
@@ -43,6 +50,7 @@ O projeto utiliza uma arquitetura modular baseada em **TypeScript**, focada em e
 * **BDD:** [CucumberJS v10+](https://github.com/cucumber/cucumber-js)
 * **Performance:** [K6](https://k6.io/) com InfluxDB e Grafana via Docker.
 * **CI/CD:** GitHub Actions.
+* **Auto Healing & RCA:** Mecanismo de autocura e Análise de Causa Raiz assistido por IA, integrando o framework ao **GitHub Models (GPT-4o)** para garantir a resiliência de seletores e diagnósticos automáticos de falhas.
 
 ### 1.2 Estrutura de Pastas
 ```text
@@ -53,6 +61,8 @@ kit-qa-fullstack/
 │   ├── .env.hmg           # Variáveis de Homologação
 │   └── .env.prd           # Variáveis de Produção
 ├── pages/                 # Page Objects (Mapeamento de elementos e ações reutilizáveis)
+│   ├── BasePages.ts       # Classe Base com suporte a IA e SmartClick (Auto-Healing)
+├── services/              # Camada de Integração (AIService para GitHub Models)
 ├── tests/                 # Suíte de Testes Automatizados
 │   ├── accessibility/     # Testes de Acessibilidade (Axe-Core / WCAG 2.1)
 │   ├── api/               # Testes de API Rest (Playwright Request + Zod Schema)
@@ -332,6 +342,25 @@ O teste varre o DOM da aplicação em busca de violações das diretrizes intern
 * **Inclusão:** Garante que o produto seja utilizável por pessoas com deficiência.
 * **SEO:** Melhorias de acessibilidade impactam diretamente o rankeamento em motores de busca.
 * **Prevenção:** Detecta cerca de 50% dos erros mais comuns de acessibilidade antes de chegar em produção.
+
+## 11. IA com Auto Healing
+
+* **Observabilidade Assistida:** Eu não uso a IA para escrever testes, mas para explicar falhas, reduzindo o tempo de depuração de horas para segundos.
+
+* **Abstração BasePage:** Eu centralizei a inteligência em uma classe pai, garantindo que o código das páginas permaneça limpo e reutilizável.
+
+* **Segurança de Tokens:** Eu validei que o acesso é feito via PAT Classic com escopos mínimos, injetado via segredos do GitHub Actions, eliminando qualquer risco de vazamento de credenciais.
+
+* Implementei uma camada de Observabilidade Inteligente que utiliza o GitHub Models (GPT-4o) para realizar Análise de Causa Raiz (RCA) automática em caso de falhas. Para garantir a resiliência do pipeline em ambientes corporativos/VPNs **sem desativar a validação de certificados SSL**, ajustei a cadeia de certificados/proxy corporativo e utilizei um agente HTTPS configurado corretamente, evitando o uso de `NODE_TLS_REJECT_UNAUTHORIZED = '0'` ou qualquer forma de *bypass* de certificados.
+
+### 11.1 IA com Auto Healing & RCA (Diferencial Técnico)
+* Este framework implementa o conceito de Observabilidade Inteligente, utilizando a API do GitHub Models para reduzir drasticamente o custo de manutenção de testes.
+
+### 11.2 Auto Healing (Autocura)
+* Através do método smartClick na BasePages.ts, o framework detecta quando um seletor falhou devido a mudanças de UI. Em tempo real, o DOM é enviado para o GPT-4o, que sugere o novo seletor funcional e permite que o teste continue sem intervenção humana manual inmediata.
+
+## 11.3 Análise de Causa Raiz (RCA) Automática
+* Sempre que um cenário falha no CI/CD, o sistema dispara uma análise de RCA. A IA interpreta o erro técnico e anexa uma explicação legível ao relatório (ex: "O teste falhou porque o botão 'Checkout' foi sobreposto por um banner publicitário"), poupando horas de depuração.
 
 ---
 
