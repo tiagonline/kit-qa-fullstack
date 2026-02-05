@@ -4,6 +4,7 @@ import { AIService } from "../services/AIService";
 
 export class InventoryPage extends BasePage {
   // Seletores
+  private readonly inventoryContainer = "#inventory_container"; // Âncora principal
   private readonly title = ".title";
   private readonly hamburgerMenu = "#react-burger-menu-btn";
   private readonly cartIcon = ".shopping_cart_link";
@@ -22,7 +23,13 @@ export class InventoryPage extends BasePage {
     super(page, ai);
   }
 
-  // --- NOVOS MÉTODOS PARA O PRIMEIRO CENÁRIO ---
+  // ⚓ MÉTODO NOVO: Espera a página estar 100% pronta
+  async waitInventoryLoad() {
+    // Espera explícita pelo container principal. Isso evita "flakiness" nos passos seguintes.
+    await this.page.waitForSelector(this.inventoryContainer, { state: 'visible', timeout: 10000 });
+  }
+
+  // --- COMPONENTES PRINCIPAIS (Cenário 1) ---
   
   async validateTitle(expectedTitle: string) {
     await expect(this.page.locator(this.title)).toHaveText(expectedTitle);
@@ -44,21 +51,24 @@ export class InventoryPage extends BasePage {
     await expect(this.page.locator(this.footer)).toBeVisible();
   }
 
-  // --- MÉTODOS DE PRODUTOS ---
+  // --- LISTA DE PRODUTOS (Cenário 2) ---
 
   async validateProductCount(count: number) {
-    await this.page.waitForSelector(this.inventoryItem, { state: 'visible', timeout: 10000 });
     const items = await this.page.locator(this.inventoryItem).count();
     expect(items).toBe(count);
   }
 
   async validateImagesLoad() {
     const images = await this.page.locator(".inventory_item_img img").all();
-    for (const img of images) {
-      const src = await img.getAttribute("src");
-      expect(src).toBeTruthy();
-      await expect(img).toBeVisible();
-    }
+    
+    // 🚀 PERFORMANCE: Valida todas as imagens em PARALELO (Promise.all)
+    // Antes: Valida 1.. espera.. Valida 2.. espera.. (Lento)
+    // Agora: Valida 1, 2, 3, 4, 5, 6 ao mesmo tempo! (Rápido)
+    await Promise.all(images.map(async (img) => {
+       const src = await img.getAttribute("src");
+       expect(src).toBeTruthy();
+       await expect(img).toBeVisible();
+    }));
   }
 
   async validateProductNames() {
@@ -80,30 +90,25 @@ export class InventoryPage extends BasePage {
 
   async validateProductButtons(buttonText: string) {
     const buttons = await this.page.locator(".btn_inventory").all();
-    for (const button of buttons) {
-        const text = await button.innerText();
-        expect(text.toLowerCase()).toBe(buttonText.toLowerCase());
-    }
+    // Validação rápida de texto
+    const texts = await Promise.all(buttons.map(b => b.innerText()));
+    texts.forEach(t => expect(t.toLowerCase()).toBe(buttonText.toLowerCase()));
   }
 
-  // --- NOVO MÉTODO PARA VALIDAR TABELA DE PRODUTOS ESPECÍFICOS ---
+  // --- TABELA DE DADOS (Cenário 3) ---
   async validateSpecificProducts(productsData: string[][]) {
-    // productsData vem como [['Sauce Labs Backpack', '$29.99'], ...]
     for (const [name, price] of productsData) {
-        // Localiza o item que tem esse texto exato
         const item = this.page.locator(this.inventoryItem, { hasText: name });
         await expect(item).toBeVisible();
-        
-        // Dentro desse item, valida o preço
-        const priceEl = item.locator(this.inventoryItemPrice);
-        await expect(priceEl).toHaveText(price);
+        await expect(item.locator(this.inventoryItemPrice)).toHaveText(price);
     }
   }
 
-  // --- RODAPÉ E ORDENAÇÃO ---
+  // --- RODAPÉ ---
 
   async validateSortOptions(expectedOptions: string[]) {
-    await this.page.waitForSelector(this.sortDropdown);
+    // Clica no dropdown para forçar renderização das opções (hack para Webkit/Firefox as vezes)
+    // Mas no Chrome só ler o texto funciona.
     const options = await this.page.locator(`${this.sortDropdown} option`).allInnerTexts();
     expectedOptions.forEach(opt => {
         expect(options.some(o => o.trim() === opt.trim())).toBeTruthy();
