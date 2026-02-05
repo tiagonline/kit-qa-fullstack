@@ -49,7 +49,7 @@ export class AIService {
         }
       });
 
-      if (response.status !== "200") {
+      if (response.status !== 200) {
         console.error(`[AIService] Erro na API: ${response.status}`);
         return "Falha na comunicação com GitHub Models.";
       }
