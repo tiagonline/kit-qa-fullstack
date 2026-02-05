@@ -1,72 +1,68 @@
-import ModelClient from "@azure-rest/ai-inference";
-import { AzureKeyCredential } from "@azure/core-auth";
-
 export class AIService {
-  private client: any = null;
-  private readonly endpoint = "https://models.inference.ai.azure.com";
+  private readonly endpoint = "https://models.inference.ai.azure.com/chat/completions";
   private readonly token: string;
 
   constructor() {
     this.token = process.env.GITHUB_AI_TOKEN || "";
-  }
-
-  private getClient() {
-    if (!this.client && this.token) {
-      try {
-        this.client = ModelClient(this.endpoint, new AzureKeyCredential(this.token));
-      } catch (e: any) {
-        console.error(`[AIService] Erro ao inicializar cliente: ${e.message}`);
-        return null;
-      }
-    }
-    return this.client;
+    if (!this.token) console.warn("[AIService] ⚠️ Token GITHUB_AI_TOKEN não encontrado!");
   }
 
   async analyzeFailure(errorMessage: string, domSnapshot: string): Promise<string> {
-    if (!this.token) return "IA desativada: Token não configurado.";
+    console.log("[AIService] 🚀 Iniciando análise via Fetch Nativo...");
+    
+    if (!this.token) return "IA desativada: Token ausente.";
 
-    const client = this.getClient();
-    if (!client) return "IA indisponível: Falha na inicialização.";
-
-    // 🎯 PROMPT BLINDADO: Exige formato estrito
     const systemPrompt = `
-      Você é um especialista em Auto-Healing para Playwright (QA).
-      Analise o erro e o DOM fornecido.
+      Você é uma IA de Self-Healing para automação de testes (Playwright).
+      Objetivo: Consertar seletores quebrados.
       
-      SEU OBJETIVO: Encontrar o seletor CSS correto para corrigir o teste.
-      
-      REGRAS CRÍTICAS DE RESPOSTA:
-      1. Se encontrar o elemento, responda APENAS o seletor dentro de crases. Exemplo: \`#login-button\`
-      2. NÃO explique nada. NÃO dê contexto. APENAS O SELETOR.
-      3. Se não encontrar, responda: \`null\`
+      Regra:
+      1. Analise o erro e o DOM.
+      2. Retorne APENAS o seletor CSS corrigido dentro de crases. Ex: \`#novo-id\`
+      3. Se não achar, responda: null
     `;
 
     try {
-      // Cortamos o DOM para não estourar o limite de tokens e focar no essencial
-      const truncatedDom = domSnapshot.slice(0, 15000);
+      const truncatedDom = domSnapshot.slice(0, 10000); 
 
-      const response = await client.path("/chat/completions").post({
-        body: {
+      console.log(`[AIService] 📤 Enviando requisição para gpt-4o-mini...`);
+
+      // ⚡ REQUISIÇÃO NATIVA (Sem SDK pesado)
+      const response = await fetch(this.endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.token}`
+        },
+        body: JSON.stringify({
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: `Erro: ${errorMessage}\n\nDOM:\n${truncatedDom}` }
           ],
-          model: "gpt-4o",
-          temperature: 0.1 // Temperatura baixa = Mais precisão, menos criatividade
-        }
+          model: "gpt-4o-mini", // Modelo mais rápido e leve
+          temperature: 0.1,
+          max_tokens: 100 // Limita resposta para ser veloz
+        })
       });
 
-      if (response.status !== "200") {
-        console.error(`[AIService] Erro na API: ${response.status}`);
+      if (!response.ok) {
+        console.error(`[AIService] ❌ Erro API: ${response.status} - ${response.statusText}`);
+        const errorText = await response.text();
+        console.error(`[AIService] Detalhe: ${errorText}`);
         return "Erro na API da IA";
       }
 
-      const data = response.body as any;
-      return data.choices?.[0]?.message?.content || "Sem resposta.";
+      const data = await response.json() as any;
+      const content = data.choices?.[0]?.message?.content;
+      
+      console.log(`[AIService] 📥 Resposta recebida: ${content}`);
+      return content || "Sem resposta.";
 
     } catch (error: any) {
-      console.error(`[AIService] Exception: ${error.message}`);
-      return "Erro interno no serviço de IA.";
+      console.error(`[AIService] 💥 Exception: ${error.message}`);
+      // Se for erro de certificado (comum em empresa), avisa
+      if (error.cause) console.error(`[AIService] Causa: ${error.cause}`);
+      return `Erro interno: ${error.message}`;
     }
   }
 }
