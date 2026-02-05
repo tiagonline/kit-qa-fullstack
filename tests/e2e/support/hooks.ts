@@ -18,7 +18,6 @@ if (fs.existsSync(envPath)) {
 let browser: Browser;
 let context: BrowserContext;
 
-// Aumentei para 60s para garantir
 setDefaultTimeout(60000);
 
 BeforeAll(async function () {
@@ -30,14 +29,12 @@ BeforeAll(async function () {
       "--disable-gpu", 
       "--no-sandbox", 
       "--disable-setuid-sandbox",
-      // --- BLOCO ANTI-TRADUÇÃO E POP-UPS ---
+      // --- OTIMIZAÇÃO CRÍTICA PARA LINUX ---
+      "--disable-dev-shm-usage", // Resolve a lentidão e travamento de memória no Linux
+      "--no-zygote",             // Evita processos zumbis
+      // -------------------------------------
       "--disable-features=Translate,TranslateUI,OptimizationHints,MediaRouter",
       "--disable-extensions",
-      "--disable-component-extensions-with-background-pages",
-      "--disable-background-networking",
-      "--disable-sync",
-      "--mute-audio",
-      "--no-first-run",
       "--lang=en-US"
     ]
   });
@@ -46,12 +43,11 @@ BeforeAll(async function () {
 Before(async function () {
   if (!process.env.BASE_URL) throw new Error("BASE_URL não definida!");
 
-  // Forçamos o locale para inglês britânico ou americano para alinhar com o site
+  // Recria o contexto para cada teste (Isolamento total)
   context = await browser.newContext({
     baseURL: process.env.BASE_URL, 
     ignoreHTTPSErrors: true,
-    locale: 'en-US',
-    timezoneId: 'America/New_York'
+    locale: 'en-US'
   });
   
   const page = await context.newPage();
@@ -65,8 +61,13 @@ After(async function (scenario) {
     const errorMessage = scenario.result.message || "";
     
     if (this.page) {
-        const screenshot = await this.page.screenshot({ fullPage: true });
-        this.attach(screenshot, 'image/png');
+        // Tenta tirar screenshot mesmo se a página travou
+        try {
+            const screenshot = await this.page.screenshot({ fullPage: true, timeout: 5000 });
+            this.attach(screenshot, 'image/png');
+        } catch (e) {
+            console.warn("Não foi possível tirar screenshot (página travada?)");
+        }
     }
 
     const isTimeout = errorMessage.includes('Timeout') || errorMessage.includes('exceeded');
@@ -75,25 +76,23 @@ After(async function (scenario) {
       try {
         const aiService = this.pageManager.ai; 
 
+        // DOM Stripping Otimizado
         const cleanDom = await this.page.evaluate(() => {
-            const clone = document.documentElement.cloneNode(true) as HTMLElement;
-            const toRemove = clone.querySelectorAll('script, style, svg, iframe, noscript');
-            toRemove.forEach(el => el.remove());
-            return clone.innerHTML;
-        });
+            return document.body ? document.body.innerHTML.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gm, "").substring(0, 20000) : "DOM Vazio";
+        }).catch(() => "Erro ao ler DOM");
 
         console.log(`[IA] ⏳ Analisando falha: ${scenario.pickle.name}...`);
-        const analysis = await aiService.analyzeFailure(errorMessage, cleanDom);
+        const analysis = await aiService.analyzeFailure(errorMessage, cleanDom as string);
         this.attach(`IA Root Cause Analysis (RCA):\n\n${analysis}`, 'text/plain');
         
-        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-        console.log(`[IA] ✅ RCA concluída em ${duration}s.`);
+        console.log(`[IA] ✅ RCA concluída em ${((Date.now() - startTime) / 1000).toFixed(2)}s.`);
       } catch (aiError) {
         console.error(`[IA] ❌ Erro na análise: ${aiError.message}`);
       }
     }
   }
 
+  // Garante o fechamento para liberar memória
   if (this.page) await this.page.close();
   if (context) await context.close();
 });
