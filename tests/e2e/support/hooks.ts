@@ -70,6 +70,9 @@ After(async function (scenario) {
     const isTimeout = errorMessage.includes('Timeout') || errorMessage.includes('exceeded');
 
     if (process.env.GITHUB_AI_TOKEN && !isTimeout) {
+      if (!this.pageManager) {
+        return;
+      }
       try {
         const aiService = this.pageManager.ai; 
 
