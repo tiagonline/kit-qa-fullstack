@@ -2,26 +2,23 @@ import ModelClient from "@azure-rest/ai-inference";
 import { AzureKeyCredential } from "@azure/core-auth";
 
 export class AIService {
-  private client: any;
+  private client: any = null; // Começa nulo
   private readonly endpoint = "https://models.inference.ai.azure.com";
   private readonly token: string;
 
   constructor() {
-    // Apenas guardamos o token, NÃO iniciamos o cliente ainda (Lazy)
+    // 🚀 PERFORMANCE: Apenas guarda o token. NÃO conecta no Azure aqui!
+    // Isso evita travar o início de cada teste com setup desnecessário.
     this.token = process.env.GITHUB_AI_TOKEN || "";
-    this.client = null;
   }
 
   private getClient() {
-    // Padrão Singleton Lazy: Só cria o cliente se ele não existir e se tiver token
-    if (!this.client) {
-      if (!this.token) {
-        return null; // Sem token, sem cliente
-      }
+    // Padrão Singleton Lazy: Só cria o cliente na primeira vez que for realmente usado
+    if (!this.client && this.token) {
       try {
         this.client = ModelClient(this.endpoint, new AzureKeyCredential(this.token));
-      } catch (e) {
-        console.error("[AIService] Erro ao iniciar credenciais Azure:", e.message);
+      } catch (e: any) {
+        console.error(`[AIService] Erro ao inicializar cliente: ${e.message}`);
         return null;
       }
     }
@@ -29,9 +26,9 @@ export class AIService {
   }
 
   async analyzeFailure(errorMessage: string, domSnapshot: string): Promise<string> {
-    // Verifica se temos token antes de tudo
     if (!this.token) return "IA desativada: Token não configurado.";
 
+    // Só agora, no momento do erro, chamamos o cliente
     const client = this.getClient();
     if (!client) return "IA indisponível: Falha na inicialização do cliente.";
 
