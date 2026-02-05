@@ -38,7 +38,7 @@ export class BasePage {
       await this.page.waitForSelector(selector, { state: 'visible', timeout: 5000 });
       await this.page.click(selector);
     } catch (error: any) {
-      if (!process.env.GITHUB_AI_TOKEN) throw error;
+      if (!process.env.AZURE_AI_TOKEN) throw error;
 
       console.warn(`[Self-Healing] 🚑 Falha ao clicar em: '${contextDescription}'. Chamando IA...`);
       

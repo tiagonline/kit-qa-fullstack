@@ -57,9 +57,12 @@ jobs:
       - name: Run E2E Tests
         run: npm run test:e2e
         env:
+          # 🤖 INJEÇÃO DA IA AQUI!
+          AZURE_AI_TOKEN: ${{ secrets.AZURE_AI_TOKEN }} 
           BASE_URL: ${{ secrets.BASE_URL }}
           SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME }}
           SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD }}
+          CI: "true" # Garante modo Headless
       
       # Upload do JSON para o Allure
       - uses: actions/upload-artifact@v4

@@ -3,8 +3,8 @@ export class AIService {
   private readonly token: string;
 
   constructor() {
-    this.token = process.env.GITHUB_AI_TOKEN || "";
-    if (!this.token) console.warn("[AIService] ⚠️ Token GITHUB_AI_TOKEN não encontrado!");
+    this.token = process.env.AZURE_AI_TOKEN || "";
+    if (!this.token) console.warn("[AIService] ⚠️ Token AZURE_AI_TOKEN não encontrado!");
   }
 
   async analyzeFailure(errorMessage: string, domSnapshot: string): Promise<string> {

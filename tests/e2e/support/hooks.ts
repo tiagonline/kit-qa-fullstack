@@ -85,7 +85,7 @@ After(async function (scenario) {
     }
 
     // IA entra em ação se houver falha
-    if (process.env.GITHUB_AI_TOKEN) {
+    if (process.env.AZURE_AI_TOKEN) {
       if (!this.pageManager) return;
       
       try {
