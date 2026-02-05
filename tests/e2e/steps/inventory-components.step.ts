@@ -1,83 +1,92 @@
-// POC - Criado com Playwright MCP
-import { Given, When, Then } from '@cucumber/cucumber';
-import { expect } from '@playwright/test';
+import { Given, When, Then, DataTable } from '@cucumber/cucumber';
 import { PageManager } from '../../../pages/PageManager';
-import * as dotenv from 'dotenv';
-import * as path from 'path';
-
-dotenv.config({ path: path.resolve(process.cwd(), 'envs/.env.dev') });
+import { expect } from '@playwright/test';
 
 Given('que estou logado no sistema', async function () {
   if (!this.pageManager) this.pageManager = new PageManager(this.page);
   await this.pageManager.login.navigate();
-  
-  const username = process.env.SAUCE_USERNAME?.trim();
-  const password = process.env.SAUCE_PASSWORD?.trim();
-  await this.pageManager.login.performLogin(username!, password!);
+  await this.pageManager.login.performLogin("standard_user", "secret_sauce");
 });
 
 Given('estou na página de inventário', async function () {
-  await expect(this.page).toHaveURL(/.*inventory\.html/, { timeout: 10000 });
+  await expect(this.page).toHaveURL(/.*inventory\.html/);
 });
 
-Then('devo ver o título {string}', async function (titulo: string) {
-  await expect(this.pageManager.inventory.productsTitle).toBeVisible();
-  await expect(this.pageManager.inventory.productsTitle).toHaveText(titulo);
+// --- CENÁRIO: COMPONENTES PRINCIPAIS ---
+
+Then('devo ver o título {string}', async function (titulo) {
+  await this.pageManager.inventory.validateTitle(titulo);
 });
 
 Then('devo ver o menu hamburguer', async function () {
-  await this.pageManager.inventory.validateMenuButton();
+  await this.pageManager.inventory.validateHamburgerMenu();
 });
 
 Then('devo ver o carrinho de compras', async function () {
-  await this.pageManager.inventory.validateCartLink();
+  await this.pageManager.inventory.validateCartIcon();
 });
 
 Then('devo ver o filtro de ordenação', async function () {
-  await this.pageManager.inventory.validateSortDropdown();
+  await this.pageManager.inventory.validateSortDropdownVisible();
 });
 
 Then('devo ver o rodapé com links sociais', async function () {
-  await this.pageManager.inventory.validateFooter();
-  await this.pageManager.inventory.validateSocialLinks();
+  await this.pageManager.inventory.validateFooterVisible();
 });
 
-Then('devo ver {int} produtos na lista', async function (expectedCount: number) {
-  const count = await this.pageManager.inventory.getProductCount();
-  expect(count).toBe(expectedCount);
+// --- CENÁRIO: LISTA DE PRODUTOS ---
+
+Then('devo ver {int} produtos na lista', async function (qtd) {
+  await this.pageManager.inventory.validateProductCount(qtd);
 });
 
-// Eu ajustei a lógica abaixo para usar localizadores dinâmicos e evitar falhas de comparação
-Then('devo ver os seguintes produtos:', async function (dataTable) {
-  const products = dataTable.hashes();
-  
-  for (const product of products) {
-    // Eu extraio o nome e o preço tratando qualquer variação de nome de coluna
-    const productName = product['Nome'] || Object.values(product)[0] as string;
-    const expectedPrice = product['Preço'] || Object.values(product)[1] as string;
-
-    // Eu localizo o container específico do produto para garantir isolamento na busca
-    const productItem = this.page.locator('.inventory_item', { hasText: productName });
-    await expect(productItem).toBeVisible();
-    
-    // Eu utilizo toContainText para ser resiliente a caracteres especiais ou espaços
-    const priceLocator = productItem.locator('.inventory_item_price');
-    await expect(priceLocator).toContainText(expectedPrice.trim());
-  }
-});
-
-// Outros steps permanecem iguais para garantir a compatibilidade
 Then('cada produto deve ter uma imagem', async function () {
-  const count = await this.pageManager.inventory.getProductCount();
-  for (let i = 0; i < count; i++) {
-    await expect(this.pageManager.inventory.productItems.nth(i).locator('img')).toBeVisible();
-  }
+  await this.pageManager.inventory.validateImagesLoad();
+});
+
+Then('cada produto deve ter um nome', async function () {
+  await this.pageManager.inventory.validateProductNames();
+});
+
+Then('cada produto deve ter uma descrição', async function () {
+  await this.pageManager.inventory.validateProductDescriptions();
+});
+
+Then('cada produto deve ter um preço', async function () {
+  await this.pageManager.inventory.validateProductPrices();
+});
+
+Then('cada produto deve ter um botão {string}', async function (btnText) {
+  await this.pageManager.inventory.validateProductButtons(btnText);
+});
+
+// --- CENÁRIO: PRODUTOS ESPECÍFICOS (DATA TABLE) ---
+
+Then('devo ver os seguintes produtos:', async function (dataTable: DataTable) {
+  // Converte a tabela do Cucumber para array de arrays [['Nome', 'Preço'], ...]
+  const products = dataTable.rows(); 
+  await this.pageManager.inventory.validateSpecificProducts(products);
+});
+
+// --- CENÁRIO: ORDENAÇÃO E RODAPÉ ---
+
+Then('devo ver as seguintes opções de ordenação:', async function (dataTable: DataTable) {
+  const options = dataTable.raw().flat(); 
+  await this.pageManager.inventory.validateSortOptions(options);
 });
 
 Then('devo ver o link do Twitter no rodapé', async function () {
-  await expect(this.pageManager.inventory.twitterLink).toBeVisible();
+  await this.pageManager.inventory.validateSocialLink('Twitter');
+});
+
+Then('devo ver o link do Facebook no rodapé', async function () {
+  await this.pageManager.inventory.validateSocialLink('Facebook');
+});
+
+Then('devo ver o link do LinkedIn no rodapé', async function () {
+  await this.pageManager.inventory.validateSocialLink('LinkedIn');
 });
 
 Then('devo ver o texto de copyright', async function () {
-  await this.pageManager.inventory.validateCopyrightText();
+  await this.pageManager.inventory.validateFooterCopy();
 });

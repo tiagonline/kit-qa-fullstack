@@ -43,7 +43,7 @@ jobs:
 
   # 2. E2E TESTS (Cucumber)
   e2e-tests:
-    name: 🖥️ E2E Tests
+    name: 🖥️ E2E w/ IA
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

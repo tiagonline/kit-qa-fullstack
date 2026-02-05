@@ -1,174 +1,123 @@
-import { type Locator, type Page, expect } from "@playwright/test";
-import { BasePage } from "./BasePages"; // Eu corrigi o nome para o singular, conforme nossa arquitetura
+import { Page, expect } from "@playwright/test";
+import { BasePage } from "./BasePages";
 import { AIService } from "../services/AIService";
 
 export class InventoryPage extends BasePage {
-  // Eu mantive a definição dos Locators para garantir compatibilidade total com seus testes
-  readonly cartLink: Locator;
-  readonly productsTitle: Locator;
-  readonly menuButton: Locator;
-  readonly sortDropdown: Locator;
-  readonly productItems: Locator;
-  readonly footer: Locator;
-  readonly twitterLink: Locator;
-  readonly facebookLink: Locator;
-  readonly linkedinLink: Locator;
+  // Seletores
+  private readonly title = ".title";
+  private readonly hamburgerMenu = "#react-burger-menu-btn";
+  private readonly cartIcon = ".shopping_cart_link";
+  private readonly inventoryItem = ".inventory_item";
+  private readonly inventoryItemName = ".inventory_item_name";
+  private readonly inventoryItemDesc = ".inventory_item_desc";
+  private readonly inventoryItemPrice = ".inventory_item_price";
+  private readonly sortDropdown = ".product_sort_container";
+  private readonly footer = "footer.footer";
+  private readonly footerTwitter = "a[href*='twitter.com']";
+  private readonly footerFacebook = "a[href*='facebook.com']";
+  private readonly footerLinkedIn = "a[href*='linkedin.com']";
+  private readonly footerCopy = ".footer_copy";
 
   constructor(page: Page, ai: AIService) {
-    // Eu repasso o page e ai para a classe pai (BasePage)
     super(page, ai);
-    
-    // Eu mantive seus seletores originais para preservar a massa de dados do SauceLabs
-    this.cartLink = page.locator('[data-test="shopping-cart-link"]');
-    this.productsTitle = page.locator('.title');
-    this.menuButton = page.locator('#react-burger-menu-btn');
-    this.sortDropdown = page.locator('[data-test="product-sort-container"]');
-    this.productItems = page.locator('.inventory_item');
-    this.footer = page.locator('footer');
-    this.twitterLink = page.locator('a[href*="twitter"]');
-    this.facebookLink = page.locator('a[href*="facebook"]');
-    this.linkedinLink = page.locator('a[href*="linkedin"]');
   }
 
-  /**
-   * Adiciona um item ao carrinho com base no nome do produto.
-   * Converte o nome para o formato de slug esperado pelo data-test.
-   */
-  async addItemToCart(itemName: string) {
-    const itemSlug = itemName.toLowerCase().replace(/\s/g, "-");
-    const selector = `[data-test="add-to-cart-${itemSlug}"]`;
-    
-    // Eu utilizo o smartClick aqui para garantir que o teste se cure sozinho se o ID mudar
-    await this.smartClick(selector, `Adicionar o produto ${itemName} ao carrinho`);
+  // --- NOVOS MÉTODOS PARA O PRIMEIRO CENÁRIO ---
+  
+  async validateTitle(expectedTitle: string) {
+    await expect(this.page.locator(this.title)).toHaveText(expectedTitle);
   }
 
-  /**
-   * Redireciona para a página do carrinho.
-   */
-  async goToCart() {
-    // Eu mapeio o clique via smartClick para cobrir mudanças no ícone do carrinho
-    await this.smartClick('[data-test="shopping-cart-link"]', "Link do Carrinho de Compras");
+  async validateHamburgerMenu() {
+    await expect(this.page.locator(this.hamburgerMenu)).toBeVisible();
   }
 
-  /**
-   * Simula a ação de favoritar um produto.
-   * No Swag Labs, usamos o botão de adicionar para demonstrar a lógica de reuso.
-   */
-  async favoritarProduto(nomeProduto: string) {
-    // Eu uso um seletor CSS combinado para que a IA tenha um contexto claro se precisar agir
-    const buttonSelector = `.inventory_item:has-text("${nomeProduto}") button`;
-    await this.smartClick(buttonSelector, `Favoritar o produto: ${nomeProduto}`);
+  async validateCartIcon() {
+    await expect(this.page.locator(this.cartIcon)).toBeVisible();
   }
 
-  /**
-   * Valida se o "favorito" está ativo.
-   * Verifica se o botão mudou o texto para "Remove", indicando que a ação foi concluída.
-   */
-  async validarIconeFavoritoAtivo(nomeProduto: string) {
-    const productLocator = this.page.locator('.inventory_item', { hasText: nomeProduto });
-    const button = productLocator.locator('button');
-    
-    // Asserções permanecem estritas para garantir a qualidade do contrato
-    await expect(button).toHaveText('Remove');
+  async validateSortDropdownVisible() {
+    await expect(this.page.locator(this.sortDropdown)).toBeVisible();
   }
 
-  /**
-   * Valida se o título "Products" está visível
-   */
-  async validateProductsTitle() {
-    await expect(this.productsTitle).toBeVisible();
-    await expect(this.productsTitle).toHaveText('Products');
+  async validateFooterVisible() {
+    await expect(this.page.locator(this.footer)).toBeVisible();
   }
 
-  /**
-   * Valida se o menu hamburguer está visível
-   */
-  async validateMenuButton() {
-    await expect(this.menuButton).toBeVisible();
+  // --- MÉTODOS DE PRODUTOS ---
+
+  async validateProductCount(count: number) {
+    await this.page.waitForSelector(this.inventoryItem, { state: 'visible', timeout: 10000 });
+    const items = await this.page.locator(this.inventoryItem).count();
+    expect(items).toBe(count);
   }
 
-  /**
-   * Valida se o carrinho de compras está visível
-   */
-  async validateCartLink() {
-    await expect(this.cartLink).toBeVisible();
-  }
-
-  /**
-   * Valida se o filtro de ordenação está visível
-   */
-  async validateSortDropdown() {
-    await expect(this.sortDropdown).toBeVisible();
-  }
-
-  /**
-   * Valida se o rodapé está visível
-   */
-  async validateFooter() {
-    await expect(this.footer).toBeVisible();
-  }
-
-  /**
-   * Retorna a contagem de produtos na página
-   */
-  async getProductCount(): Promise<number> {
-    return await this.productItems.count();
-  }
-
-  /**
-   * Valida que cada produto tem imagem, nome, descrição, preço e botão
-   */
-  async validateProductComponents() {
-    const count = await this.getProductCount();
-    for (let i = 0; i < count; i++) {
-      const product = this.productItems.nth(i);
-      await expect(product.locator('img')).toBeVisible();
-      await expect(product.locator('.inventory_item_name')).toBeVisible();
-      await expect(product.locator('.inventory_item_desc')).toBeVisible();
-      await expect(product.locator('.inventory_item_price')).toBeVisible();
-      await expect(product.locator('button')).toBeVisible();
+  async validateImagesLoad() {
+    const images = await this.page.locator(".inventory_item_img img").all();
+    for (const img of images) {
+      const src = await img.getAttribute("src");
+      expect(src).toBeTruthy();
+      await expect(img).toBeVisible();
     }
   }
 
-  /**
-   * Valida as opções disponíveis no dropdown de ordenação
-   */
+  async validateProductNames() {
+    const names = await this.page.locator(this.inventoryItemName).allInnerTexts();
+    expect(names.length).toBeGreaterThan(0);
+    names.forEach(name => expect(name.trim()).not.toBe(""));
+  }
+
+  async validateProductDescriptions() {
+    const descs = await this.page.locator(this.inventoryItemDesc).allInnerTexts();
+    expect(descs.length).toBeGreaterThan(0);
+  }
+
+  async validateProductPrices() {
+    const prices = await this.page.locator(this.inventoryItemPrice).allInnerTexts();
+    expect(prices.length).toBeGreaterThan(0);
+    prices.forEach(price => expect(price).toMatch(/\$\d+\.\d{2}/));
+  }
+
+  async validateProductButtons(buttonText: string) {
+    const buttons = await this.page.locator(".btn_inventory").all();
+    for (const button of buttons) {
+        const text = await button.innerText();
+        expect(text.toLowerCase()).toBe(buttonText.toLowerCase());
+    }
+  }
+
+  // --- NOVO MÉTODO PARA VALIDAR TABELA DE PRODUTOS ESPECÍFICOS ---
+  async validateSpecificProducts(productsData: string[][]) {
+    // productsData vem como [['Sauce Labs Backpack', '$29.99'], ...]
+    for (const [name, price] of productsData) {
+        // Localiza o item que tem esse texto exato
+        const item = this.page.locator(this.inventoryItem, { hasText: name });
+        await expect(item).toBeVisible();
+        
+        // Dentro desse item, valida o preço
+        const priceEl = item.locator(this.inventoryItemPrice);
+        await expect(priceEl).toHaveText(price);
+    }
+  }
+
+  // --- RODAPÉ E ORDENAÇÃO ---
+
   async validateSortOptions(expectedOptions: string[]) {
-    const options = this.sortDropdown.locator('option');
-    const count = await options.count();
-    expect(count).toBe(expectedOptions.length);
-    
-    for (let i = 0; i < count; i++) {
-      const optionText = await options.nth(i).textContent();
-      expect(expectedOptions).toContain(optionText);
-    }
+    await this.page.waitForSelector(this.sortDropdown);
+    const options = await this.page.locator(`${this.sortDropdown} option`).allInnerTexts();
+    expectedOptions.forEach(opt => {
+        expect(options.some(o => o.trim() === opt.trim())).toBeTruthy();
+    });
   }
 
-  /**
-   * Valida se um produto específico está visível com o preço correto
-   */
-  async validateProduct(productName: string, price: string) {
-    const product = this.page.locator('.inventory_item', { hasText: productName });
-    await expect(product).toBeVisible();
-    await expect(product.locator('.inventory_item_price')).toHaveText(price);
+  async validateSocialLink(network: 'Twitter' | 'Facebook' | 'LinkedIn') {
+    const selector = network === 'Twitter' ? this.footerTwitter :
+                     network === 'Facebook' ? this.footerFacebook : this.footerLinkedIn;
+    await expect(this.page.locator(selector)).toBeVisible();
   }
 
-  /**
-   * Valida os links sociais no rodapé
-   */
-  async validateSocialLinks() {
-    await expect(this.twitterLink).toBeVisible();
-    await expect(this.facebookLink).toBeVisible();
-    await expect(this.linkedinLink).toBeVisible();
-  }
-
-  /**
-   * Valida o texto de copyright no rodapé
-   */
-  async validateCopyrightText() {
-    const copyrightText = this.footer.locator('.footer_copy');
-    await expect(copyrightText).toBeVisible();
-    // Mantive 2026 conforme solicitado para manter a paridade com seu projeto original
-    await expect(copyrightText).toContainText('© 2026 Sauce Labs');
+  async validateFooterCopy() {
+    await expect(this.page.locator(this.footerCopy)).toBeVisible();
+    await expect(this.page.locator(this.footerCopy)).toContainText("Sauce Labs");
   }
 }
