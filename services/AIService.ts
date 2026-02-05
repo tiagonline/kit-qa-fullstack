@@ -3,16 +3,37 @@ import { AzureKeyCredential } from "@azure/core-auth";
 
 export class AIService {
   private client: any;
+  private readonly endpoint = "https://models.inference.ai.azure.com";
+  private readonly token: string;
 
   constructor() {
-    const token = process.env.GITHUB_AI_TOKEN || "";
-    const endpoint = "https://models.inference.ai.azure.com";
+    // Apenas guardamos o token, NÃO iniciamos o cliente ainda (Lazy)
+    this.token = process.env.GITHUB_AI_TOKEN || "";
+    this.client = null;
+  }
 
-    this.client = ModelClient(endpoint, new AzureKeyCredential(token));
+  private getClient() {
+    // Padrão Singleton Lazy: Só cria o cliente se ele não existir e se tiver token
+    if (!this.client) {
+      if (!this.token) {
+        return null; // Sem token, sem cliente
+      }
+      try {
+        this.client = ModelClient(this.endpoint, new AzureKeyCredential(this.token));
+      } catch (e) {
+        console.error("[AIService] Erro ao iniciar credenciais Azure:", e.message);
+        return null;
+      }
+    }
+    return this.client;
   }
 
   async analyzeFailure(errorMessage: string, domSnapshot: string): Promise<string> {
-    if (!process.env.GITHUB_AI_TOKEN) return "IA desativada: Token não configurado.";
+    // Verifica se temos token antes de tudo
+    if (!this.token) return "IA desativada: Token não configurado.";
+
+    const client = this.getClient();
+    if (!client) return "IA indisponível: Falha na inicialização do cliente.";
 
     const systemPrompt = `
       Você é um Arquiteto de Testes de Software (QA Sênior).
@@ -28,7 +49,7 @@ export class AIService {
     try {
       const truncatedDom = domSnapshot.slice(0, 20000);
 
-      const response = await this.client.path("/chat/completions").post({
+      const response = await client.path("/chat/completions").post({
         body: {
           messages: [
             { role: "system", content: systemPrompt },
@@ -44,11 +65,7 @@ export class AIService {
         return "Falha na comunicação com GitHub Models.";
       }
 
-      // CORREÇÃO TS2339:
-      // O TypeScript não infere automaticamente que 'choices' existe só pelo if acima.
-      // Usamos 'as any' para acessar a propriedade com segurança após a validação do status.
       const data = response.body as any;
-      
       return data.choices?.[0]?.message?.content || "Sem resposta da IA.";
 
     } catch (error: any) {
