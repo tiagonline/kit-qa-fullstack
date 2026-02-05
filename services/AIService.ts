@@ -2,18 +2,15 @@ import ModelClient from "@azure-rest/ai-inference";
 import { AzureKeyCredential } from "@azure/core-auth";
 
 export class AIService {
-  private client: any = null; // Começa nulo
+  private client: any = null;
   private readonly endpoint = "https://models.inference.ai.azure.com";
   private readonly token: string;
 
   constructor() {
-    // 🚀 PERFORMANCE: Apenas guarda o token. NÃO conecta no Azure aqui!
-    // Isso evita travar o início de cada teste com setup desnecessário.
     this.token = process.env.GITHUB_AI_TOKEN || "";
   }
 
   private getClient() {
-    // Padrão Singleton Lazy: Só cria o cliente na primeira vez que for realmente usado
     if (!this.client && this.token) {
       try {
         this.client = ModelClient(this.endpoint, new AzureKeyCredential(this.token));
@@ -28,42 +25,44 @@ export class AIService {
   async analyzeFailure(errorMessage: string, domSnapshot: string): Promise<string> {
     if (!this.token) return "IA desativada: Token não configurado.";
 
-    // Só agora, no momento do erro, chamamos o cliente
     const client = this.getClient();
-    if (!client) return "IA indisponível: Falha na inicialização do cliente.";
+    if (!client) return "IA indisponível: Falha na inicialização.";
 
+    // 🎯 PROMPT BLINDADO: Exige formato estrito
     const systemPrompt = `
-      Você é um Arquiteto de Testes de Software (QA Sênior).
-      Sua tarefa é analisar erros de Playwright em testes E2E.
+      Você é um especialista em Auto-Healing para Playwright (QA).
+      Analise o erro e o DOM fornecido.
       
-      REGRAS DE RESPOSTA:
-      1. Identifique a Causa Raiz provável baseada no erro e no HTML.
-      2. Se o erro for de seletor não encontrado, SUGIRA UM ÚNICO SELETOR CSS CORRIGIDO.
-      3. IMPORTANTE: Envolva o seletor sugerido entre crases, exemplo: \`#id-correto\`.
-      4. Seja breve e técnico.
+      SEU OBJETIVO: Encontrar o seletor CSS correto para corrigir o teste.
+      
+      REGRAS CRÍTICAS DE RESPOSTA:
+      1. Se encontrar o elemento, responda APENAS o seletor dentro de crases. Exemplo: \`#login-button\`
+      2. NÃO explique nada. NÃO dê contexto. APENAS O SELETOR.
+      3. Se não encontrar, responda: \`null\`
     `;
 
     try {
-      const truncatedDom = domSnapshot.slice(0, 20000);
+      // Cortamos o DOM para não estourar o limite de tokens e focar no essencial
+      const truncatedDom = domSnapshot.slice(0, 15000);
 
       const response = await client.path("/chat/completions").post({
         body: {
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: `Erro: ${errorMessage}\n\nDOM Context:\n${truncatedDom}` }
+            { role: "user", content: `Erro: ${errorMessage}\n\nDOM:\n${truncatedDom}` }
           ],
           model: "gpt-4o",
-          temperature: 0.1
+          temperature: 0.1 // Temperatura baixa = Mais precisão, menos criatividade
         }
       });
 
       if (response.status !== "200") {
         console.error(`[AIService] Erro na API: ${response.status}`);
-        return "Falha na comunicação com GitHub Models.";
+        return "Erro na API da IA";
       }
 
       const data = response.body as any;
-      return data.choices?.[0]?.message?.content || "Sem resposta da IA.";
+      return data.choices?.[0]?.message?.content || "Sem resposta.";
 
     } catch (error: any) {
       console.error(`[AIService] Exception: ${error.message}`);

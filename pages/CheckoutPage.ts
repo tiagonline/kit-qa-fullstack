@@ -1,72 +1,65 @@
-import { expect, type Locator, type Page } from "@playwright/test";
-import { BasePage } from "./BasePages"; // Eu herdo da BasePage
+import { Page, expect } from "@playwright/test";
+import { BasePage } from "./BasePages";
 import { AIService } from "../services/AIService";
 
 export class CheckoutPage extends BasePage {
-  readonly firstNameInput: Locator;
-  readonly lastNameInput: Locator;
-  readonly postalCodeInput: Locator;
-  readonly continueButton: Locator;
-  readonly finishButton: Locator;
-  readonly errorMessage: Locator;
-  readonly orderCompleteHeader: Locator;
+  // Seletores Step One
+  private readonly firstNameInput = "#first-name";
+  private readonly lastNameInput = "#last-name";
+  private readonly zipInput = "#postal-code";
+  private readonly continueButton = "#continue";
+  private readonly errorMessage = "[data-test='error']";
+
+  // Seletores Step Two (Overview)
+  private readonly finishButton = "#finish";
+  private readonly cancelButton = "#cancel";
+
+  // Seletores Complete
+  private readonly completeHeader = ".complete-header";
+  private readonly backHomeButton = "#back-to-products";
 
   constructor(page: Page, ai: AIService) {
-    // Eu inicializo a classe pai com o page e o serviço de IA
     super(page, ai);
-
-    // Eu mantive todos os seus localizadores originais de preenchimento e validação
-    this.firstNameInput = page.locator('[data-test="firstName"]');
-    this.lastNameInput = page.locator('[data-test="lastName"]');
-    this.postalCodeInput = page.locator('[data-test="postalCode"]');
-    this.continueButton = page.locator('[data-test="continue"]');
-    this.finishButton = page.locator('[data-test="finish"]');
-    
-    // Elementos de Validação
-    this.errorMessage = page.locator('[data-test="error"]');
-    this.orderCompleteHeader = page.locator(".complete-header");
   }
 
-  /**
-   * Método de Ação: Preenche as informações e clica em continuar.
-   * Eu mantive o preenchimento padrão (fill) e apliquei o smartClick no botão de transição.
-   */
-  async fillInformation(
-    firstName: string,
-    lastName: string,
-    postalCode: string,
-  ) {
-    await this.firstNameInput.fill(firstName);
-    await this.lastNameInput.fill(lastName);
-    await this.postalCodeInput.fill(postalCode);
-    
-    // Eu uso o smartClick aqui pois o botão 'Continue' é um ponto comum de falha em refatorações de UI
-    await this.smartClick('[data-test="continue"]', "Botão Continuar do Formulário de Checkout");
+  // --- FLUXO NEGATIVO / FORMULÁRIO ---
+  async clickContinue() {
+    console.log("[Checkout] Tentando continuar...");
+    await this.smartClick(this.continueButton, "Botão Continue no Checkout");
   }
 
-  /**
-   * Método de Ação: Finaliza o checkout.
-   */
-  async finishCheckout() {
-    // Eu aplico resiliência no clique final que confirma a compra
-    await this.smartClick('[data-test="finish"]', "Botão Finish para concluir o pedido");
-  }
-
-  /**
-   * Método de Validação: Isolando o expect no Page Object.
-   */
   async validateErrorMessage(message: string) {
-    // Eu mantive a asserção original baseada em texto
-    await expect(this.errorMessage).toContainText(message);
+    await this.page.waitForSelector(this.errorMessage, { state: 'visible' });
+    const text = await this.page.textContent(this.errorMessage);
+    if (!text?.includes(message)) {
+        throw new Error(`Esperava erro "${message}", mas recebeu "${text}"`);
+    }
   }
 
-  /**
-   * Método de Validação: Verifica se a ordem foi completada com sucesso.
-   */
-  async validateOrderComplete() {
-    // Eu mantive o texto de sucesso original do SauceLabs
-    await expect(this.orderCompleteHeader).toHaveText(
-      "Thank you for your order!",
-    );
+  // --- FLUXO POSITIVO (O que faltava!) ---
+  async fillCheckoutForm(firstName: string, lastName: string, zip: string) {
+    console.log(`[Checkout] Preenchendo formulário: ${firstName} ${lastName}`);
+    await this.page.fill(this.firstNameInput, firstName);
+    await this.page.fill(this.lastNameInput, lastName);
+    await this.page.fill(this.zipInput, zip);
+    await this.clickContinue();
+    
+    // Espera ir para o Step Two (Overview)
+    await this.page.waitForURL(/.*checkout-step-two\.html/);
+    await this.page.waitForSelector(this.finishButton, { state: 'visible' });
+  }
+
+  async clickFinish() {
+    console.log("[Checkout] Finalizando compra...");
+    await this.smartClick(this.finishButton, "Botão Finish");
+    
+    // Espera ir para a tela de Complete
+    await this.page.waitForURL(/.*checkout-complete\.html/);
+  }
+
+  async validateOrderSuccess(message: string) {
+    console.log("[Checkout] Validando sucesso...");
+    await this.page.waitForSelector(this.completeHeader, { state: 'visible' });
+    await expect(this.page.locator(this.completeHeader)).toContainText(message);
   }
 }

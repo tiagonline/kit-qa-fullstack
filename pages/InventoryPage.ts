@@ -5,14 +5,16 @@ import { AIService } from "../services/AIService";
 export class InventoryPage extends BasePage {
   // Seletores
   private readonly inventoryContainer = "#inventory_container";
-  private readonly title = ".title";
-  private readonly hamburgerMenu = "#react-burger-menu-btn";
-  private readonly cartIcon = ".shopping_cart_link"; // O ícone clicável
+  private readonly cartIcon = ".shopping_cart_link";
+  private readonly cartBadge = ".shopping_cart_badge"; // 🔴 NOVO SELETOR
   private readonly inventoryItem = ".inventory_item";
   private readonly inventoryItemName = ".inventory_item_name";
   private readonly inventoryItemDesc = ".inventory_item_desc";
   private readonly inventoryItemPrice = ".inventory_item_price";
   private readonly sortDropdown = ".product_sort_container";
+  // ... (outros seletores de footer mantidos)
+  private readonly title = ".title";
+  private readonly hamburgerMenu = "#react-burger-menu-btn";
   private readonly footer = "footer.footer";
   private readonly footerTwitter = "a[href*='twitter.com']";
   private readonly footerFacebook = "a[href*='facebook.com']";
@@ -28,26 +30,36 @@ export class InventoryPage extends BasePage {
     await this.page.waitForSelector(this.inventoryContainer, { state: 'visible', timeout: 10000 });
   }
 
-  // --- AÇÃO: ADICIONAR AO CARRINHO ---
+  // --- AÇÃO: ADICIONAR AO CARRINHO (BLINDADO) ---
   async addItemToCart(productName: string) {
     console.log(`[Inventory] Adicionando '${productName}' ao carrinho...`);
     const item = this.page.locator(this.inventoryItem, { hasText: productName });
     await expect(item).toBeVisible();
+    
     const addToCartBtn = item.locator("button[id^='add-to-cart']");
     await addToCartBtn.click();
+
+    // 🛑 SINCRONIA: Espera a bolinha vermelha aparecer antes de prosseguir!
+    // Isso garante que o site registrou a ação e está pronto para navegar.
+    console.log("[Inventory] Aguardando confirmação visual (badge)...");
+    await this.page.waitForSelector(this.cartBadge, { state: 'visible', timeout: 5000 });
   }
 
-  // --- AÇÃO: IR PARA O CARRINHO (O que faltava!) ---
+  // --- AÇÃO: IR PARA O CARRINHO (COM DEBUG) ---
   async goToCart() {
     console.log("[Inventory] Navegando para o Carrinho...");
-    await this.smartClick(this.cartIcon, "Ícone do Carrinho");
     
-    // Espera explícita pela URL e pelo container do carrinho
-    await this.page.waitForURL(/.*cart\.html/);
+    // Usamos force: true para garantir o clique mesmo se houver animação sobrepondo
+    await this.page.locator(this.cartIcon).click({ force: true });
+    
+    console.log("[Inventory] Aguardando URL do carrinho...");
+    await this.page.waitForURL(/.*cart\.html/, { timeout: 10000 });
+    
     await this.page.waitForSelector(".cart_list", { state: 'visible' });
+    console.log("[Inventory] Carrinho carregado com sucesso!");
   }
 
-  // --- COMPONENTES PRINCIPAIS ---
+  // --- RESTO DOS MÉTODOS (Mantidos iguais) ---
   async validateTitle(expectedTitle: string) {
     await expect(this.page.locator(this.title)).toHaveText(expectedTitle);
   }
@@ -68,7 +80,6 @@ export class InventoryPage extends BasePage {
     await expect(this.page.locator(this.footer)).toBeVisible();
   }
 
-  // --- LISTA DE PRODUTOS ---
   async validateProductCount(count: number) {
     const items = await this.page.locator(this.inventoryItem).count();
     expect(items).toBe(count);
@@ -114,7 +125,6 @@ export class InventoryPage extends BasePage {
     }
   }
 
-  // --- RODAPÉ E ORDENAÇÃO ---
   async validateSortOptions(expectedOptions: string[]) {
     const options = await this.page.locator(`${this.sortDropdown} option`).allInnerTexts();
     expectedOptions.forEach(opt => {

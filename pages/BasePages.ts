@@ -10,11 +10,6 @@ export class BasePage {
     this.ai = ai;
   }
 
-  /**
-   * Navegação Resiliente com FAST FAIL:
-   * A 1ª tentativa tem timeout curto (5s) para não travar o teste se a rede engasgar.
-   * As tentativas seguintes usam timeout padrão (30s).
-   */
   async navigate(path: string = "") {
     const url = path ? path : (process.env.BASE_URL || "");
     const maxRetries = 3;
@@ -22,32 +17,18 @@ export class BasePage {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             console.log(`[BasePage] 🧭 Navegando para: ${url} (Tentativa ${attempt}/${maxRetries})`);
-
-            // ESTRATÉGIA FAST FAIL:
-            // Se for a primeira tentativa, espera só 5s. Se travar, já tenta de novo.
-            // Nas próximas, damos mais tempo (30s) para carregar.
             const currentTimeout = attempt === 1 ? 5000 : 30000;
 
-            await this.page.goto(path, { 
-                waitUntil: 'domcontentloaded', 
-                timeout: currentTimeout 
-            });
-            
+            await this.page.goto(path, { waitUntil: 'domcontentloaded', timeout: currentTimeout });
             await this.page.waitForSelector('body', { timeout: 10000 }); 
-            
-            return; // Sucesso! Sai do loop.
+            return; 
 
         } catch (error: any) {
-            // Se for a última tentativa, explode o erro.
             if (attempt === maxRetries) {
                 console.error(`[BasePage] ❌ Falha final de conexão com ${url}`);
                 throw error;
             }
-            
-            const isTimeout = error.message.includes('Timeout');
-            console.warn(`[BasePage] ⚠️ Falha na tentativa ${attempt} (${isTimeout ? 'Timeout' : 'Erro'}): Retentando...`);
-            
-            // Backoff: Espera um pouquinho antes de tentar de novo
+            console.warn(`[BasePage] ⚠️ Falha na tentativa ${attempt} (${error.message.includes('Timeout') ? 'Timeout' : 'Erro'}): Retentando...`);
             await this.page.waitForTimeout(2000);
         }
     }
@@ -55,29 +36,47 @@ export class BasePage {
 
   async smartClick(selector: string, contextDescription: string) {
     try {
-      await this.page.waitForSelector(selector, { state: 'visible', timeout: 15000 });
+      // Tenta clicar normalmente
+      await this.page.waitForSelector(selector, { state: 'visible', timeout: 5000 }); // Timeout curto para acionar o healing rápido
       await this.page.click(selector);
     } catch (error: any) {
+      // Se falhar e não tiver token, explode erro normal
       if (!process.env.GITHUB_AI_TOKEN) throw error;
 
-      console.warn(`[Self-Healing] Falha ao clicar em: '${contextDescription}'. Iniciando reparo via IA...`);
+      console.warn(`[Self-Healing] 🚑 Falha ao clicar em: '${contextDescription}'. Pedindo socorro à IA...`);
       
-      const cleanDom = await this.page.evaluate(() => {
-          const clone = document.documentElement.cloneNode(true) as HTMLElement;
-          const toRemove = clone.querySelectorAll('script, style, svg, iframe, noscript');
-          toRemove.forEach(el => el.remove());
-          return clone.innerHTML;
-      });
+      try {
+          const cleanDom = await this.page.evaluate(() => {
+              // Limpa scripts e styles para facilitar a leitura da IA
+              return document.body ? document.body.innerHTML.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gm, "").substring(0, 15000) : "DOM Vazio";
+          });
 
-      const failureMessage = error.message || String(error);
-      const analysis = await this.ai.analyzeFailure(failureMessage, cleanDom);
-      const suggestedSelector = analysis.match(/`([^`]+)`/)?.[1];
+          const failureMessage = error.message || String(error);
+          
+          // Chama a IA
+          const analysis = await this.ai.analyzeFailure(failureMessage, cleanDom);
+          
+          // 🔍 DEBUG: Ver o que a IA respondeu
+          console.log(`[Self-Healing] 🤖 Resposta da IA: ${analysis}`);
 
-      if (suggestedSelector) {
-        console.log(`[Self-Healing] ✅ Sucesso! Novo seletor aplicado: ${suggestedSelector}`);
-        await this.page.click(suggestedSelector);
-      } else {
-        throw error;
+          // Extrai o conteúdo entre crases
+          const suggestedSelector = analysis.match(/`([^`]+)`/)?.[1];
+
+          if (suggestedSelector) {
+            console.log(`[Self-Healing] ✅ Seletor encontrado: ${suggestedSelector}. Aplicando correção...`);
+            
+            // Tenta clicar no NOVO seletor sugerido
+            await this.page.waitForSelector(suggestedSelector, { state: 'visible', timeout: 5000 });
+            await this.page.click(suggestedSelector);
+            
+            console.log(`[Self-Healing] ✨ SUCESSO! O teste foi curado automaticamente.`);
+          } else {
+            console.error(`[Self-Healing] ❌ A IA não conseguiu sugerir um seletor válido.`);
+            throw error; // Relança o erro original se a IA falhar
+          }
+      } catch (aiError) {
+          console.error(`[Self-Healing] 💀 Falha crítica no processo de cura: ${aiError}`);
+          throw error; // Garante que o teste falhe se o healing quebrar
       }
     }
   }
