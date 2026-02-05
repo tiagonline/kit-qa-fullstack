@@ -1,7 +1,6 @@
 import { Before, After, BeforeAll, AfterAll, Status, setDefaultTimeout } from '@cucumber/cucumber';
 import { chromium, Browser, BrowserContext } from '@playwright/test';
 import { PageManager } from '../../../pages/PageManager';
-import { AIService } from 'services/AIService';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
