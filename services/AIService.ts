@@ -1,10 +1,12 @@
 import ModelClient from "@azure-rest/ai-inference";
 import { AzureKeyCredential } from "@azure/core-auth";
 
+type AzureModelClient = ReturnType<typeof ModelClient>;
+
 export class AIService {
   // Usei 'any' aqui pois a tipagem do @azure-rest às vezes conflita com versões de TS, 
   // mas em produção poderíamos criar uma interface.
-  private client: any;
+  private client: AzureModelClient;
 
   constructor() {
     // Eu utilizo o token que você acabou de validar no terminal
