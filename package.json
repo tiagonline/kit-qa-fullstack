@@ -15,7 +15,7 @@
     "k6:build": "webpack --config tests/k6-load/webpack.config.js",
     "k6:run": "bash -c 'npm run k6:up && npm run k6:build && echo \"Aguardando Grafana...\" && sleep 5 && (command -v explorer.exe >/dev/null && explorer.exe http://localhost:3000/d/fullstack-load-test || xdg-open http://localhost:3000/d/fullstack-load-test || open http://localhost:3000/d/fullstack-load-test || true) && k6 run -e K6_BASE_URL=$K6_BASE_URL tests/k6-load/dist/fullstack.test.js --out influxdb=http://localhost:8086/k6'",
     "k6:down": "docker compose -f tests/k6-load/docker-compose.yml down",
-    "k6:ci": "npm run k6:build && k6 run -e K6_BASE_URL=$K6_BASE_URL tests/k6-load/dist/fullstack.test.js --out influxdb=http://localhost:8086/k6",
+    "k6:ci": "npm run k6:build && k6 run -e K6_BASE_URL=$K6_BASE_URL -e CI=$CI tests/k6-load/dist/fullstack.test.js --out influxdb=http://localhost:8086/k6",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
     "ci": "npm run format && npm run lint && npm run test:all",

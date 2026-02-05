@@ -3,17 +3,20 @@ import getRequest from "../requests/getRequest";
 import postRequest from "../requests/postRequest";
 import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
 
+// Environment-specific thresholds: stricter for local development, relaxed for CI
+const isCI = __ENV.CI === "true" || __ENV.GITHUB_ACTIONS === "true";
+const p95Threshold = isCI ? 2500 : 2000; // CI containers have higher latency
+const errorRateThreshold = isCI ? 0.15 : 0.10; // CI may have more network collisions
+
 export let options = {
   stages: [
     { duration: "10s", target: 20 },
     { duration: "30s", target: 50 },
-    { duration: "10s", target: 0 }, // Eu mudei para 0 para garantir o encerramento limpo das conexões
+    { duration: "10s", target: 0 },
   ],
   thresholds: {
-    // Eu aumentei o p(95) para 2.5s para acomodar a latência natural dos containers de CI
-    http_req_duration: ["p(95)<2500"],
-    // Eu ajustei a taxa de erro permitida para 15% para evitar falhas por colisões de dados ou rede
-    http_req_failed: ["rate<0.15"],
+    http_req_duration: [`p(95)<${p95Threshold}`],
+    http_req_failed: [`rate<${errorRateThreshold}`],
   },
 };
 

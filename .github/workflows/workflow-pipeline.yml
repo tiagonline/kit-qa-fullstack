@@ -143,6 +143,7 @@ jobs:
           docker compose -f tests/k6-load/docker-compose.yml down
         env:
           K6_BASE_URL: ${{ secrets.K6_BASE_URL }}
+          CI: true
 
       - name: Prepare K6 Report
         if: always()
