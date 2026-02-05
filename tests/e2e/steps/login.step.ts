@@ -1,7 +1,6 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { PageManager } from '../../../pages/PageManager';
-// Não precisa carregar dotenv aqui de novo, o hooks.ts já fez isso globalmente!
 
 Given('que estou na página de login', async function () {
   if (!this.pageManager) this.pageManager = new PageManager(this.page);
