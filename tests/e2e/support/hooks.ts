@@ -1,6 +1,3 @@
-// Forçamos a aceitação de certificados
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
 import { Before, After, BeforeAll, AfterAll, Status, setDefaultTimeout } from '@cucumber/cucumber';
 import { chromium, Browser, BrowserContext } from '@playwright/test';
 import { PageManager } from '../../../pages/PageManager';
