@@ -1,7 +1,9 @@
 import { type Locator, type Page, expect } from "@playwright/test";
+import { BasePage } from "./BasePages"; // Eu corrigi o nome para o singular, conforme nossa arquitetura
+import { AIService } from "../services/AIService";
 
-export class InventoryPage {
-  readonly page: Page;
+export class InventoryPage extends BasePage {
+  // Eu mantive a definição dos Locators para garantir compatibilidade total com seus testes
   readonly cartLink: Locator;
   readonly productsTitle: Locator;
   readonly menuButton: Locator;
@@ -12,8 +14,11 @@ export class InventoryPage {
   readonly facebookLink: Locator;
   readonly linkedinLink: Locator;
 
-  constructor(page: Page) {
-    this.page = page;
+  constructor(page: Page, ai: AIService) {
+    // Eu repasso o page e ai para a classe pai (BasePage)
+    super(page, ai);
+    
+    // Eu mantive seus seletores originais para preservar a massa de dados do SauceLabs
     this.cartLink = page.locator('[data-test="shopping-cart-link"]');
     this.productsTitle = page.locator('.title');
     this.menuButton = page.locator('#react-burger-menu-btn');
@@ -31,17 +36,18 @@ export class InventoryPage {
    */
   async addItemToCart(itemName: string) {
     const itemSlug = itemName.toLowerCase().replace(/\s/g, "-");
-    const itemButtonLocator = this.page.locator(
-      `[data-test="add-to-cart-${itemSlug}"]`,
-    );
-    await itemButtonLocator.click();
+    const selector = `[data-test="add-to-cart-${itemSlug}"]`;
+    
+    // Eu utilizo o smartClick aqui para garantir que o teste se cure sozinho se o ID mudar
+    await this.smartClick(selector, `Adicionar o produto ${itemName} ao carrinho`);
   }
 
   /**
    * Redireciona para a página do carrinho.
    */
   async goToCart() {
-    await this.cartLink.click();
+    // Eu mapeio o clique via smartClick para cobrir mudanças no ícone do carrinho
+    await this.smartClick('[data-test="shopping-cart-link"]', "Link do Carrinho de Compras");
   }
 
   /**
@@ -49,9 +55,9 @@ export class InventoryPage {
    * No Swag Labs, usamos o botão de adicionar para demonstrar a lógica de reuso.
    */
   async favoritarProduto(nomeProduto: string) {
-    // Localiza o item específico pelo texto (nome) e clica no botão contido nele
-    const productLocator = this.page.locator('.inventory_item', { hasText: nomeProduto });
-    await productLocator.locator('button').click();
+    // Eu uso um seletor CSS combinado para que a IA tenha um contexto claro se precisar agir
+    const buttonSelector = `.inventory_item:has-text("${nomeProduto}") button`;
+    await this.smartClick(buttonSelector, `Favoritar o produto: ${nomeProduto}`);
   }
 
   /**
@@ -62,7 +68,7 @@ export class InventoryPage {
     const productLocator = this.page.locator('.inventory_item', { hasText: nomeProduto });
     const button = productLocator.locator('button');
     
-    // Asserção do Playwright para garantir que o estado do botão mudou
+    // Asserções permanecem estritas para garantir a qualidade do contrato
     await expect(button).toHaveText('Remove');
   }
 
@@ -162,6 +168,7 @@ export class InventoryPage {
   async validateCopyrightText() {
     const copyrightText = this.footer.locator('.footer_copy');
     await expect(copyrightText).toBeVisible();
+    // Mantive 2026 conforme solicitado para manter a paridade com seu projeto original
     await expect(copyrightText).toContainText('© 2026 Sauce Labs');
   }
 }
