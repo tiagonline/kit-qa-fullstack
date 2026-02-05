@@ -351,7 +351,7 @@ O teste varre o DOM da aplicação em busca de violações das diretrizes intern
 
 * **Segurança de Tokens:** Eu validei que o acesso é feito via PAT Classic com escopos mínimos, injetado via segredos do GitHub Actions, eliminando qualquer risco de vazamento de credenciais.
 
-* Implementei uma camada de Observabilidade Inteligente que utiliza o GitHub Models (GPT-4o) para realizar Análise de Causa Raiz (RCA) automática em caso de falhas. Para garantir a resiliência do pipeline em ambientes corporativos/VPNs, configurei o bypass de certificados SSL no Node.js, assegurando que a análise de IA nunca seja interrompida por problemas de rede.
+* Implementei uma camada de Observabilidade Inteligente que utiliza o GitHub Models (GPT-4o) para realizar Análise de Causa Raiz (RCA) automática em caso de falhas. Para garantir a resiliência do pipeline em ambientes corporativos/VPNs **sem desativar a validação de certificados SSL**, ajustei a cadeia de certificados/proxy corporativo e utilizei um agente HTTPS configurado corretamente, evitando o uso de `NODE_TLS_REJECT_UNAUTHORIZED = '0'` ou qualquer forma de *bypass* de certificados.
 
 ### 11.1 IA com Auto Healing & RCA (Diferencial Técnico)
 * Este framework implementa o conceito de Observabilidade Inteligente, utilizando a API do GitHub Models para reduzir drasticamente o custo de manutenção de testes.
