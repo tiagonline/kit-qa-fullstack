@@ -35,20 +35,39 @@ export default defineConfig({
     }
   },
 
-  projects: [
+projects: [
+    // 1. Suíte E2E Principal (Desktop)
+    // Pega todos os .spec.ts dentro de 'e2e', exceto os visuais/mobile/steps
+    {
+      name: 'E2E Web',
+      testMatch: ['tests/e2e/**/*.spec.ts'], 
+      testIgnore: ['**/*.visual.spec.ts', '**/*.mobile.spec.ts', '**/steps/*.ts'],
+      use: { 
+        ...devices['Desktop Chrome'],
+        channel: 'chrome', // Força usar o Chrome real se disponível
+      },
+    },
+    // 2. Testes de Regressão Visual (Snapshot Testing)
     {
       name: 'Visual Regression',
-      testMatch: /.*visual.spec.ts/, // Só roda os testes visuais
+      testMatch: /.*visual.spec.ts/, 
       use: { ...devices['Desktop Chrome'] },
     },
+
+    // 3. Testes Mobile (Emulação)
     {
       name: 'Mobile',
       testMatch: /.*mobile.spec.ts/,
       use: { ...devices['Pixel 5'] },
     },
+
+    // 4. Testes de API (Sem navegador)
     {
       name: 'API',
       testMatch: /.*api.spec.ts/,
+      use: { 
+        viewport: null // Economiza recursos pois não abre janela
+      }
     }
   ],
 });
