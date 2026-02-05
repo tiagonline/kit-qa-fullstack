@@ -41,18 +41,12 @@ BeforeAll(async function () {
 
 Before(async function (scenario) {
   // --- 🎨 ALLURE HIERARCHY SETUP ---
-  // Aqui definimos que todos os testes E2E ficam dentro da suite "e2e"
   const featureName = scenario.gherkinDocument.feature?.name || "Funcionalidade Desconhecida";
   const world = this as any; 
   
   if (world.label) {
-      // 1. Nível Mais Alto (Pasta Raiz no Relatório)
       world.label("parentSuite", "e2e"); 
-      
-      // 2. Nível Secundário (Agrupamento por Feature/Funcionalidade)
       world.label("suite", featureName);     
-      
-      // 3. Nível Terciário (Nome do Cenário - opcional, mas ajuda na busca)
       world.label("subSuite", scenario.pickle.name); 
   }
   // -------------------------------
@@ -68,6 +62,11 @@ Before(async function (scenario) {
   const page = await context.newPage();
   this.page = page;
   this.pageManager = new PageManager(this.page);
+
+  // 👇 AJUSTE CRÍTICO AQUI:
+  // Conectamos a função 'attach' do Cucumber ao PageManager.
+  // Isso permite que o BasePage anexe o relatório de "Cura" do Self-Healing no Allure.
+  this.pageManager.setAllureAttach(this.attach.bind(this));
 });
 
 After(async function (scenario) {
@@ -84,7 +83,7 @@ After(async function (scenario) {
         }
     }
 
-    // IA entra em ação se houver falha
+    // IA entra em ação se houver falha (RCA - Root Cause Analysis)
     if (process.env.AZURE_AI_TOKEN) {
       if (!this.pageManager) return;
       

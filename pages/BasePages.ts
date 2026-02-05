@@ -4,41 +4,33 @@ import { AIService } from "../services/AIService";
 export class BasePage {
   protected readonly page: Page;
   protected readonly ai: AIService;
+  // Nova propriedade para função de anexo do Allure
+  private attachFn?: (content: string, type: string) => void;
 
   constructor(page: Page, ai: AIService) {
     this.page = page;
     this.ai = ai;
   }
 
+  // Novo método para configurar o anexo (chamado pelo Hooks)
+  public setAttachFunction(fn: (content: string, type: string) => void) {
+    this.attachFn = fn;
+  }
+
   async navigate(path: string = "") {
-    const url = path ? path : (process.env.BASE_URL || "");
-    const maxRetries = 3;
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            console.log(`[BasePage] 🧭 Navegando para: ${url} (Tentativa ${attempt}/${maxRetries})`);
-            const currentTimeout = attempt === 1 ? 5000 : 30000;
-            await this.page.goto(path, { waitUntil: 'domcontentloaded', timeout: currentTimeout });
-            await this.page.waitForSelector('body', { timeout: 10000 }); 
-            return; 
-        } catch (error: any) {
-            if (attempt === maxRetries) {
-                console.error(`[BasePage] ❌ Falha final de conexão com ${url}`);
-                throw error;
-            }
-            console.warn(`[BasePage] ⚠️ Falha na tentativa ${attempt}: Retentando...`);
-            await this.page.waitForTimeout(2000);
-        }
-    }
+     // ... (mantenha o código de navigate igual)
+     const url = path ? path : (process.env.BASE_URL || "");
+     // ... código existente ...
+     // Apenas para abreviar aqui na resposta, mantenha o seu navigate original
+     await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 }); 
   }
 
   async smartClick(selector: string, contextDescription: string) {
     try {
-      // Tenta clicar com timeout curto (5s)
       await this.page.waitForSelector(selector, { state: 'visible', timeout: 5000 });
       await this.page.click(selector);
     } catch (error: any) {
-      if (!process.env.AZURE_AI_TOKEN) throw error;
+      if (!process.env.AZURE_AI_TOKEN) throw error; // Use o nome novo da variavel
 
       console.warn(`[Self-Healing] 🚑 Falha ao clicar em: '${contextDescription}'. Chamando IA...`);
       
@@ -53,17 +45,20 @@ export class BasePage {
           const analysis = await this.ai.analyzeFailure(failureMessage, cleanDom);
           console.log(`[Self-Healing] 🤖 Retorno da IA: ${analysis}`);
 
-          // Regex mais flexível: Pega entre crases OU pega a última palavra se parecer um ID/Class
           const match = analysis.match(/`([^`]+)`/);
-          let suggestedSelector = match ? match[1] : null;
-
-          // Fallback: Se a IA respondeu só "#login-button" sem crases
-          if (!suggestedSelector && (analysis.startsWith("#") || analysis.startsWith("."))) {
-              suggestedSelector = analysis.trim();
-          }
+          let suggestedSelector = match ? match[1] : (analysis.startsWith("#") || analysis.startsWith(".") ? analysis.trim() : null);
 
           if (suggestedSelector && suggestedSelector !== "null") {
             console.log(`[Self-Healing] ✅ Tentando novo seletor: ${suggestedSelector}`);
+            
+            // 🚨 AQUI ESTÁ A MÁGICA DO REPORT 🚨
+            if (this.attachFn) {
+                this.attachFn(
+                    `⚠️ SELF-HEALING ATIVADO!\n\nSeletor Original Quebrado: ${selector}\nSeletor Novo (IA): ${suggestedSelector}\nContexto: ${contextDescription}`, 
+                    'text/plain'
+                );
+            }
+
             await this.page.waitForSelector(suggestedSelector, { state: 'visible', timeout: 5000 });
             await this.page.click(suggestedSelector);
             console.log(`[Self-Healing] ✨ SUCESSO! Correção aplicada.`);
