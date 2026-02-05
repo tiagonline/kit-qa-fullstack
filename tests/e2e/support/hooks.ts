@@ -8,7 +8,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
 
-// Carrega .env com segurança
+// Carrega .env
 const envPath = path.resolve(process.cwd(), 'envs/.env.dev');
 if (fs.existsSync(envPath)) {
     dotenv.config({ path: envPath });
@@ -18,9 +18,7 @@ if (fs.existsSync(envPath)) {
 let browser: Browser;
 let context: BrowserContext;
 
-// ⏱️ TIMEOUT GLOBAL: 120s
-// Damos 2 minutos para o teste. Se a rede cair e o Retry Pattern gastar 90s,
-// ainda sobra tempo para a IA analisar o erro antes do Cucumber matar o processo.
+// Timeout global de 2 minutos para tolerar instabilidade de rede e Retry Pattern
 setDefaultTimeout(120 * 1000);
 
 BeforeAll(async function () {
@@ -32,7 +30,7 @@ BeforeAll(async function () {
       "--disable-gpu", 
       "--no-sandbox", 
       "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage", // Vital para Linux/Docker
+      "--disable-dev-shm-usage",
       "--no-zygote",
       "--disable-features=Translate,TranslateUI,OptimizationHints,MediaRouter",
       "--disable-extensions",
@@ -42,14 +40,19 @@ BeforeAll(async function () {
 });
 
 Before(async function (scenario) {
-  // --- 🎨 ALLURE HIERARCHY FIX ---
-  // Organiza os testes na aba "Suites" do relatório (E2E Web > Feature > Cenário)
+  // --- 🎨 ALLURE HIERARCHY SETUP ---
+  // Aqui definimos que todos os testes E2E ficam dentro da suite "e2e"
   const featureName = scenario.gherkinDocument.feature?.name || "Funcionalidade Desconhecida";
   const world = this as any; 
   
   if (world.label) {
-      world.label("parentSuite", "E2E Web"); 
+      // 1. Nível Mais Alto (Pasta Raiz no Relatório)
+      world.label("parentSuite", "e2e"); 
+      
+      // 2. Nível Secundário (Agrupamento por Feature/Funcionalidade)
       world.label("suite", featureName);     
+      
+      // 3. Nível Terciário (Nome do Cenário - opcional, mas ajuda na busca)
       world.label("subSuite", scenario.pickle.name); 
   }
   // -------------------------------
@@ -72,7 +75,6 @@ After(async function (scenario) {
     const startTime = Date.now();
     const errorMessage = scenario.result.message || "";
     
-    // Tira Screenshot do erro
     if (this.page) {
         try {
             const screenshot = await this.page.screenshot({ fullPage: true, timeout: 5000 });
@@ -82,22 +84,19 @@ After(async function (scenario) {
         }
     }
 
-    // --- 🤖 IA UNLEASHED (IA Liberada) ---
-    // Removi a condição "&& !isTimeout". Agora a IA analisa TUDO.
+    // IA entra em ação se houver falha
     if (process.env.GITHUB_AI_TOKEN) {
       if (!this.pageManager) return;
       
       try {
         const aiService = this.pageManager.ai; 
 
-        // Limpeza do DOM para economizar tokens
         const cleanDom = await this.page.evaluate(() => {
             return document.body ? document.body.innerHTML.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gm, "").substring(0, 20000) : "DOM Vazio";
         }).catch(() => "Erro ao ler DOM");
 
         console.log(`[IA] ⏳ Analisando falha: ${scenario.pickle.name}...`);
         
-        // Chama a IA e anexa o resultado no relatório
         const analysis = await aiService.analyzeFailure(errorMessage, cleanDom as string);
         this.attach(`IA Root Cause Analysis (RCA):\n\n${analysis}`, 'text/plain');
         
@@ -108,7 +107,6 @@ After(async function (scenario) {
     }
   }
 
-  // Encerramento seguro
   if (this.page) await this.page.close();
   if (context) await context.close();
 });
