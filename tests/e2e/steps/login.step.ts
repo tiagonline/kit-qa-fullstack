@@ -11,9 +11,20 @@ Given('que estou na página de login', async function () {
 });
 
 When('preencho as credenciais válidas', async function () {
-  // O Hook já garantiu que as variáveis existem, mas o trim() é uma boa prática
-  const username = process.env.SAUCE_USERNAME?.trim() || "standard_user";
-  const password = process.env.SAUCE_PASSWORD?.trim() || "secret_sauce";
+  // Valida explicitamente as variáveis de ambiente exigidas para o login
+  const rawUsername = process.env.SAUCE_USERNAME;
+  const rawPassword = process.env.SAUCE_PASSWORD;
+
+  if (!rawUsername || !rawUsername.trim()) {
+    throw new Error('Environment variable SAUCE_USERNAME must be set and non-empty for this test.');
+  }
+
+  if (!rawPassword || !rawPassword.trim()) {
+    throw new Error('Environment variable SAUCE_PASSWORD must be set and non-empty for this test.');
+  }
+
+  const username = rawUsername.trim();
+  const password = rawPassword.trim();
   
   // Chama o método que SÓ preenche, sem recarregar a página
   await this.pageManager.login.performLogin(username, password);
