@@ -12,7 +12,7 @@ Given('estou na página de inventário', async function () {
   // 1. Valida a URL (Rápido)
   await expect(this.page).toHaveURL(/.*inventory\.html/);
   
-  // 2. ⚓ ÂNCORA: Garante que a grade de produtos carregou antes de prosseguir.
+  // 2. Garante que a grade de produtos carregou antes de prosseguir.
   // Isso evita que os próximos passos fiquem "girando em falso".
   await this.pageManager.inventory.waitInventoryLoad();
 });

@@ -7,16 +7,14 @@ Given('que estou na página de login', async function () {
 });
 
 // --- FLUXO POSITIVO ---
-// Frase: "Quando realizo login..." -> Espera sucesso (true)
 When('realizo login com {string} e {string}', async function (usuario, senha) {
   await this.pageManager.login.performLogin(usuario, senha, true);
 });
 
 // --- FLUXO NEGATIVO ---
-// Frase: "Quando tento logar..." -> NÃO espera sucesso (false)
 When('tento logar com usuario {string} e senha {string}', async function (usuario, senha) {
   console.log(`[Step] Executando login negativo para: ${usuario}`);
-  // 👇 OBRIGATÓRIO: Passar 'false' para não travar esperando o inventário
+  // Passar 'false' para não travar esperando o inventário
   await this.pageManager.login.performLogin(usuario, senha, false);
 });
 

@@ -40,7 +40,6 @@ BeforeAll(async function () {
 });
 
 Before(async function (scenario) {
-  // --- 🎨 ALLURE HIERARCHY SETUP ---
   const featureName = scenario.gherkinDocument.feature?.name || "Funcionalidade Desconhecida";
   const world = this as any; 
   
@@ -63,7 +62,6 @@ Before(async function (scenario) {
   this.page = page;
   this.pageManager = new PageManager(this.page);
 
-  // 👇 AJUSTE CRÍTICO AQUI:
   // Conectamos a função 'attach' do Cucumber ao PageManager.
   // Isso permite que o BasePage anexe o relatório de "Cura" do Self-Healing no Allure.
   this.pageManager.setAllureAttach(this.attach.bind(this));

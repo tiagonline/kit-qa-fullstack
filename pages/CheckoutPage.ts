@@ -36,7 +36,7 @@ export class CheckoutPage extends BasePage {
     }
   }
 
-  // --- FLUXO POSITIVO (O que faltava!) ---
+  // --- FLUXO POSITIVO ---
   async fillCheckoutForm(firstName: string, lastName: string, zip: string) {
     console.log(`[Checkout] Preenchendo formulário: ${firstName} ${lastName}`);
     await this.page.fill(this.firstNameInput, firstName);

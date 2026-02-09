@@ -12,7 +12,6 @@ export class LoginPage extends BasePage {
     super(page, ai);
   }
 
-  // 👇 O PULO DO GATO: expectSuccess = true por padrão
   async performLogin(user: string, pass: string, expectSuccess: boolean = true) {
     if (this.page.url() === 'about:blank') {
         await this.navigate();
@@ -29,15 +28,14 @@ export class LoginPage extends BasePage {
         
         await this.smartClick(this.loginButton, "Botão de Login");
 
-        // 👇 A LÓGICA DE DECISÃO QUE EVITA O TRAVAMENTO
+        // A LÓGICA DE DECISÃO QUE EVITA O TRAVAMENTO
         if (expectSuccess) {
             console.log(`[Login] Fluxo Positivo: Aguardando redirecionamento para Inventário...`);
             await this.page.waitForURL(/.*inventory\.html/, { timeout: 20000 });
             await this.page.waitForSelector(this.inventoryContainer, { state: 'visible' });
             console.log(`[Login] ✅ Login realizado e página carregada!`);
         } else {
-            // 🛑 AQUI ESTÁ A CORREÇÃO:
-            // Se esperamos falha, NÃO esperamos URL mudar. Liberamos o teste imediatamente.
+            // Se espera falha, NÃO esperamos URL mudar. Liberamos o teste imediatamente.
             console.log(`[Login] Fluxo Negativo: Login submetido, verificando erros...`);
         }
 

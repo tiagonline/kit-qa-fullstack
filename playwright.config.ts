@@ -9,7 +9,6 @@ export default defineConfig({
   testDir: './tests',
   timeout: 60000,
   
-  // 👇 AQUI ESTÁ A CORREÇÃO VISUAL
   expect: { 
     timeout: 10000,
     toHaveScreenshot: {

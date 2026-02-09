@@ -27,7 +27,6 @@ export class AIService {
 
       console.log(`[AIService] 📤 Enviando requisição para gpt-4o-mini...`);
 
-      // ⚡ REQUISIÇÃO NATIVA (Sem SDK pesado)
       const response = await fetch(this.endpoint, {
         method: "POST",
         headers: {
@@ -60,7 +59,7 @@ export class AIService {
 
     } catch (error: any) {
       console.error(`[AIService] 💥 Exception: ${error.message}`);
-      // Se for erro de certificado (comum em empresa), avisa
+      // Se for erro de certificado, avisa
       if (error.cause) console.error(`[AIService] Causa: ${error.cause}`);
       return `Erro interno: ${error.message}`;
     }

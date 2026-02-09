@@ -27,11 +27,11 @@ export class PageManager {
     return this._ai;
   }
 
-  // 🔥 NOVO MÉTODO: Recebe o 'attach' do Cucumber (do hooks.ts)
+  // Recebe o 'attach' do Cucumber (do hooks.ts)
   public setAllureAttach(fn: (content: string, type: string) => void) {
     this.attachFn = fn;
     
-    // Se alguma página já tiver sido instanciada antes disso (raro, mas possível), atualiza ela
+    // Se alguma página já tiver sido instanciada antes disso, atualiza ela
     if (this.loginPage) this.loginPage.setAttachFunction(fn);
     if (this.inventoryPage) this.inventoryPage.setAttachFunction(fn);
     if (this.cartPage) this.cartPage.setAttachFunction(fn);

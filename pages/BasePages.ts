@@ -4,7 +4,6 @@ import { AIService } from "../services/AIService";
 export class BasePage {
   protected readonly page: Page;
   protected readonly ai: AIService;
-  // Nova propriedade para função de anexo do Allure
   private attachFn?: (content: string, type: string) => void;
 
   constructor(page: Page, ai: AIService) {
@@ -12,16 +11,13 @@ export class BasePage {
     this.ai = ai;
   }
 
-  // Novo método para configurar o anexo (chamado pelo Hooks)
   public setAttachFunction(fn: (content: string, type: string) => void) {
     this.attachFn = fn;
   }
 
   async navigate(path: string = "") {
-     // ... (mantenha o código de navigate igual)
+
      const url = path ? path : (process.env.BASE_URL || "");
-     // ... código existente ...
-     // Apenas para abreviar aqui na resposta, mantenha o seu navigate original
      await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 }); 
   }
 

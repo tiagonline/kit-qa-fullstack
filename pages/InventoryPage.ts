@@ -6,13 +6,13 @@ export class InventoryPage extends BasePage {
   // Seletores
   private readonly inventoryContainer = "#inventory_container";
   private readonly cartIcon = ".shopping_cart_link";
-  private readonly cartBadge = ".shopping_cart_badge"; // 🔴 NOVO SELETOR
+  private readonly cartBadge = ".shopping_cart_badge";
   private readonly inventoryItem = ".inventory_item";
   private readonly inventoryItemName = ".inventory_item_name";
   private readonly inventoryItemDesc = ".inventory_item_desc";
   private readonly inventoryItemPrice = ".inventory_item_price";
   private readonly sortDropdown = ".product_sort_container";
-  // ... (outros seletores de footer mantidos)
+  // seletores de footer
   private readonly title = ".title";
   private readonly hamburgerMenu = "#react-burger-menu-btn";
   private readonly footer = "footer.footer";
@@ -25,12 +25,12 @@ export class InventoryPage extends BasePage {
     super(page, ai);
   }
 
-  // ⚓ MÉTODO DE ÂNCORA
+  // MÉTODO DE ÂNCORA
   async waitInventoryLoad() {
     await this.page.waitForSelector(this.inventoryContainer, { state: 'visible', timeout: 10000 });
   }
 
-  // --- AÇÃO: ADICIONAR AO CARRINHO (BLINDADO) ---
+  // --- AÇÃO: ADICIONAR AO CARRINHO ---
   async addItemToCart(productName: string) {
     console.log(`[Inventory] Adicionando '${productName}' ao carrinho...`);
     const item = this.page.locator(this.inventoryItem, { hasText: productName });
@@ -45,11 +45,11 @@ export class InventoryPage extends BasePage {
     await this.page.waitForSelector(this.cartBadge, { state: 'visible', timeout: 5000 });
   }
 
-  // --- AÇÃO: IR PARA O CARRINHO (COM DEBUG) ---
+  // --- AÇÃO: IR PARA O CARRINHO  ---
   async goToCart() {
     console.log("[Inventory] Navegando para o Carrinho...");
     
-    // Usamos force: true para garantir o clique mesmo se houver animação sobrepondo
+    // force: true para garantir o clique mesmo se houver animação sobrepondo
     await this.page.locator(this.cartIcon).click({ force: true });
     
     console.log("[Inventory] Aguardando URL do carrinho...");
@@ -59,7 +59,6 @@ export class InventoryPage extends BasePage {
     console.log("[Inventory] Carrinho carregado com sucesso!");
   }
 
-  // --- RESTO DOS MÉTODOS (Mantidos iguais) ---
   async validateTitle(expectedTitle: string) {
     await expect(this.page.locator(this.title)).toHaveText(expectedTitle);
   }

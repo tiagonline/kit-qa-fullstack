@@ -2,7 +2,6 @@ import { Given, When, Then } from '@cucumber/cucumber';
 
 // --- SETUP / LOGIN ---
 
-// Mapeamento exato para a frase curta "que estou logado" (usada no seu feature)
 Given('que estou logado', async function () {
   // Atalho para logar rápido
   await this.pageManager.login.navigate();
@@ -33,15 +32,13 @@ Then('devo ver a mensagem de erro no checkout {string}', async function (msg) {
   await this.pageManager.checkout.validateErrorMessage(msg);
 });
 
-// --- FLUXO POSITIVO (Correção dos nomes dos passos) ---
+// --- FLUXO POSITIVO ---
 
-// 1. Mapeamento para a frase genérica "preencho os dados de entrega corretamente"
 When('preencho os dados de entrega corretamente', async function () {
   // Passamos dados fixos (Hardcoded) pois o passo do Gherkin não enviou parâmetros
   await this.pageManager.checkout.fillCheckoutForm("Tiago", "QA", "12345-678");
 });
 
-// 2. Mantemos a versão parametrizada caso você queira usar no futuro
 When('preencho o formulário de checkout com {string}, {string} e {string}', async function (nome, sobrenome, cep) {
   await this.pageManager.checkout.fillCheckoutForm(nome, sobrenome, cep);
 });
