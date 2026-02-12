@@ -7,6 +7,14 @@ Given('que estou na página de login', async function () {
 });
 
 // --- FLUXO POSITIVO ---
+When('preencho as credenciais válidas', async function () {
+  // Pilar de Arquitetura #1: Zero Hardcoding. Tenta pegar do .env, senão usa fallback.
+  const user = process.env.STANDARD_USER;
+  const pass = process.env.SECRET_SAUCE;
+  
+  await this.pageManager.login.performLogin(user, pass, true);
+});
+
 When('realizo login com {string} e {string}', async function (usuario, senha) {
   await this.pageManager.login.performLogin(usuario, senha, true);
 });
