@@ -1,29 +1,19 @@
 module.exports = {
   default: {
-    // 1. Definição de Caminhos
-    paths: ['tests/e2e/features/**/*.feature'],
-    requireModule: ['ts-node/register'],
-    require: [
-      'tests/e2e/steps/**/*.ts',
-      'tests/e2e/support/hooks.ts',
-      'tests/e2e/support/world.ts'
-    ],
+    paths: ["tests/e2e/features/**/*.feature"],
+    requireModule: ["ts-node/register"],
+    require: ["tests/e2e/steps/**/*.ts", "tests/e2e/support/**/*.ts"],
     
-    // 2. Formatos de Saída (O CORAÇÃO DO PROBLEMA)
     format: [
-      'progress-bar',                              // Visual limpo no console
-      'html:cucumber-report.html',                 // <--- RESTAURADO: Gera o HTML que o Deploy precisa
-      'json:allure-results/cucumber_report.json'   // Mantido: Gera o JSON para o Allure
+      "progress-bar",                    // 1. Visual no Terminal
+      "html:cucumber-report.html",       // 2. Relatório HTML Simples
+      "allure-cucumberjs/reporter"       // 3. Relatório Rico Allure
     ],
     
-    // 3. Opções Extras
-    formatOptions: { 
-      snippetInterface: 'async-await',
-      colorsEnabled: true
-    },
-    
-    // 4. Execução
-    parallel: 1, 
-    retry: 0
-  }
+    formatOptions: {
+      resultsDir: "allure-results",      // Garante que o Allure salve na pasta certa
+      colorsEnabled: true,
+      dummyFormat: false
+    }
+  },
 };
