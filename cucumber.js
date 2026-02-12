@@ -1,6 +1,6 @@
 module.exports = {
   default: {
-    // Aponta para os arquivos corretos
+    // 1. Definição de Caminhos
     paths: ['tests/e2e/features/**/*.feature'],
     requireModule: ['ts-node/register'],
     require: [
@@ -8,15 +8,21 @@ module.exports = {
       'tests/e2e/support/hooks.ts',
       'tests/e2e/support/world.ts'
     ],
-    // Formatação segura para CI
+    
+    // 2. Formatos de Saída (O CORAÇÃO DO PROBLEMA)
     format: [
-      'progress-bar', // Visual limpo no terminal
-      'json:allure-results/cucumber_report.json' // Gera JSON para o Allure processar depois
+      'progress-bar',                              // Visual limpo no console
+      'html:cucumber-report.html',                 // <--- RESTAURADO: Gera o HTML que o Deploy precisa
+      'json:allure-results/cucumber_report.json'   // Mantido: Gera o JSON para o Allure
     ],
+    
+    // 3. Opções Extras
     formatOptions: { 
-      snippetInterface: 'async-await' 
+      snippetInterface: 'async-await',
+      colorsEnabled: true
     },
-    // Paralelismo (Cuidado em CI com poucos recursos)
+    
+    // 4. Execução
     parallel: 1, 
     retry: 0
   }
