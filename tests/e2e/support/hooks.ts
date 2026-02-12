@@ -9,10 +9,9 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const envPath = path.resolve(process.cwd(), 'envs/.env.dev');
 dotenv.config({ path: envPath });
 
-// --- DEBUG DE NODE.JS (Para pegar o erro oculto) ---
+// --- DEBUG DE NODE.JS ---
 process.on('unhandledRejection', (reason, promise) => {
     console.error('🔥 CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
-    // Não damos exit(1) aqui para não falhar o teste se for um erro bobo de analytics
 });
 
 let browser: Browser;
@@ -41,10 +40,29 @@ Before(async function (scenario) {
   const scenarioName = scenario.pickle.name;
   console.log(`[Hooks] ▶️  Cenário: ${scenarioName}`);
 
-  // Configuração do contexto por cenário (Isolamento)
+  // ============================================================
+  // 🏷️ A MÁGICA DAS SUÍTES (RESTAURADA)
+  // Isso garante que o Allure organize os testes nas pastinhas certas
+  // ============================================================
+  // O 'this' aqui é o World do Cucumber, que o Allure extende
+  if (this.label) {
+      this.label("framework", "cucumberjs");
+      this.label("language", "typescript");
+      
+      // Nível 1: Pasta Raiz (Ex: "E2E Web")
+      this.label("parentSuite", "E2E Web"); 
+      
+      // Nível 2: Nome da Funcionalidade (Ex: "Login")
+      this.label("suite", featureName);     
+      
+      // Nível 3: Nome do Cenário (Ex: "Login com sucesso")
+      this.label("subSuite", scenarioName); 
+  }
+  // ============================================================
+
   context = await browser.newContext({
     ignoreHTTPSErrors: true,
-    viewport: { width: 1280, height: 720 }, // Tamanho padrão evita erros de responsividade
+    viewport: { width: 1280, height: 720 },
     locale: 'en-US'
   });
   
@@ -52,14 +70,12 @@ Before(async function (scenario) {
   this.page = page;
   this.pageManager = new PageManager(this.page);
   
-  // Link para o Allure (se disponível)
   if (this.attach) {
       this.pageManager.setAllureAttach(this.attach.bind(this));
   }
 });
 
 After(async function (scenario) {
-  // 1. Tira Screenshot em caso de falha
   if (scenario.result?.status === Status.FAILED) {
     if (this.page) {
         try {
@@ -71,7 +87,6 @@ After(async function (scenario) {
     }
   }
 
-  // 2. Limpeza do Contexto (Safe Close)
   try {
       if (this.page && !this.page.isClosed()) await this.page.close();
       if (context) await context.close();
@@ -88,10 +103,6 @@ AfterAll(async function () {
       console.warn(`[Hooks] Erro ao fechar browser: ${e}`);
   }
 
-  // -----------------------------------------------------------
-  // O SEGREDO DO CI: Forçar saída limpa após os testes
-  // Isso mata processos "zumbis" do Playwright que causam Exit 1
-  // -----------------------------------------------------------
   if (process.env.CI === 'true') {
       console.log('[Hooks] 🏁 CI Detectado: Forçando Exit Code 0...');
       setTimeout(() => process.exit(0), 500); 
