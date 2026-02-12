@@ -5,7 +5,7 @@ import { AIService } from "../services/AIService";
 export class LoginPage extends BasePage {
   private readonly usernameInput = "#user-name";
   private readonly passwordInput = "#password";
-  private readonly loginButton = "#login-button";
+  private readonly loginButton = "#login-button-error";
   private readonly inventoryContainer = "#inventory_container"; 
   private readonly errorContainer = "[data-test='error']";
 
