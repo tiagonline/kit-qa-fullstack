@@ -1,11 +1,9 @@
 module.exports = {
   default: {
-    // Aponta para seus testes Cucumber (.feature)
     paths: ["tests/e2e/features/**/*.feature"],
     requireModule: ["ts-node/register"],
     require: ["tests/e2e/steps/**/*.ts", "tests/e2e/support/**/*.ts"],
     
-    // --- O SEGREDO DAS SUÍTES ESTÁ AQUI ---
     format: [
       "progress-bar",                    // 1. Barra de progresso no terminal
       "html:cucumber-report.html",       // 2. Gera o HTML simples (para o deploy não quebrar)

@@ -5,7 +5,7 @@ import { PageManager } from '../../../pages/PageManager';
 // O passo "Dado que estou logado" é puxado do checkout.steps.ts automaticamente.
 
 When('favoritado o produto {string}', async function (produto) {
-  // Como a loja não tem "Favoritos" real, simulamos adiciono ao carrinho
+  // Como a loja não tem "Favoritos" real, adiciono ao carrinho
   // ou verifico se o botão virou "Remove"
   if (!this.pageManager) this.pageManager = new PageManager(this.page);
   await this.pageManager.inventory.addItemToCart(produto); 

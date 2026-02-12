@@ -1,5 +1,5 @@
 import { Given, When, Then } from '@cucumber/cucumber';
-import { expect } from '@playwright/test'; // Adicionado para asserções
+import { expect } from '@playwright/test';
 import { PageManager } from '../../../pages/PageManager';
 
 Given('que estou na página de login', async function () {
@@ -9,7 +9,6 @@ Given('que estou na página de login', async function () {
 
 // --- FLUXO POSITIVO ---
 When('preencho as credenciais válidas', async function () {
-  // Busca do .env ou usa fallback seguro
   const user = process.env.STANDARD_USER || "standard_user";
   const pass = process.env.SECRET_SAUCE || "secret_sauce";
   
@@ -21,7 +20,6 @@ When('realizo login com {string} e {string}', async function (usuario, senha) {
   await this.pageManager.login.performLogin(usuario, senha, true);
 });
 
-// --- NOVO STEP QUE FALTAVA ---
 Then('devo ser redirecionado para a vitrine de produtos', async function () {
   console.log('[Step] Validando redirecionamento para Vitrine...');
   // Garante que a URL mudou para /inventory.html
@@ -31,7 +29,7 @@ Then('devo ser redirecionado para a vitrine de produtos', async function () {
 // --- FLUXO NEGATIVO ---
 When('tento logar com usuario {string} e senha {string}', async function (usuario, senha) {
   console.log(`[Step] Executando login negativo para: ${usuario}`);
-  // Passamos 'false' para não travar esperando o inventário
+  // Passo 'false' para não travar esperando o inventário
   await this.pageManager.login.performLogin(usuario, senha, false);
 });
 

@@ -4,12 +4,10 @@ import { PageManager } from '../../../pages/PageManager';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// --- CONFIGURAÇÃO DE AMBIENTE ---
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const envPath = path.resolve(process.cwd(), 'envs/.env.dev');
 dotenv.config({ path: envPath });
 
-// --- DEBUG DE NODE.JS ---
 process.on('unhandledRejection', (reason, promise) => {
     console.error('🔥 CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
 });
@@ -40,11 +38,6 @@ Before(async function (scenario) {
   const scenarioName = scenario.pickle.name;
   console.log(`[Hooks] ▶️  Cenário: ${scenarioName}`);
 
-  // ============================================================
-  // 🏷️ A MÁGICA DAS SUÍTES (RESTAURADA)
-  // Isso garante que o Allure organize os testes nas pastinhas certas
-  // ============================================================
-  // O 'this' aqui é o World do Cucumber, que o Allure extende
   if (this.label) {
       this.label("framework", "cucumberjs");
       this.label("language", "typescript");
@@ -58,7 +51,6 @@ Before(async function (scenario) {
       // Nível 3: Nome do Cenário (Ex: "Login com sucesso")
       this.label("subSuite", scenarioName); 
   }
-  // ============================================================
 
   context = await browser.newContext({
     ignoreHTTPSErrors: true,

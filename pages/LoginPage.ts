@@ -30,7 +30,6 @@ export class LoginPage extends BasePage {
             // Verifica se o React aceitou o valor
             await expect(this.page.locator(this.usernameInput)).toHaveValue(user, { timeout: 2000 });
         } else {
-            // Se o usuário for vazio, garante que o campo está vazio (limpa sujeira de testes anteriores)
             await expect(this.page.locator(this.usernameInput)).toHaveValue("", { timeout: 2000 });
         }
 
@@ -46,7 +45,6 @@ export class LoginPage extends BasePage {
             console.log(`[Login] ✅ Sucesso: Inventário carregado!`);
         } else {
             console.log(`[Login] ⏳ Aguardando mensagem de erro...`);
-            // Não usamos sleep fixo aqui, deixamos o assert do validateErrorMessage cuidar do tempo
         }
 
     } catch (error: any) {
