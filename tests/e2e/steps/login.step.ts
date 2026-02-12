@@ -6,11 +6,11 @@ Given('que estou na página de login', async function () {
   await this.pageManager.login.navigate();
 });
 
-// --- FLUXO POSITIVO ---
+// --- FLUXO POSITIVO (FIX: Step Adicionado) ---
 When('preencho as credenciais válidas', async function () {
   // Pilar de Arquitetura #1: Zero Hardcoding. Tenta pegar do .env, senão usa fallback.
-  const user = process.env.STANDARD_USER;
-  const pass = process.env.SECRET_SAUCE;
+  const user = process.env.STANDARD_USER || "standard_user";
+  const pass = process.env.SECRET_SAUCE || "secret_sauce";
   
   await this.pageManager.login.performLogin(user, pass, true);
 });
