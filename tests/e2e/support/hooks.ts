@@ -1,4 +1,4 @@
-// Forçamos a aceitação de certificados logo na linha 1
+// Forçamos a aceitação de certificados
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 import { Before, After, BeforeAll, AfterAll, Status, setDefaultTimeout } from '@cucumber/cucumber';
@@ -12,13 +12,12 @@ import * as fs from 'fs';
 const envPath = path.resolve(process.cwd(), 'envs/.env.dev');
 if (fs.existsSync(envPath)) {
     dotenv.config({ path: envPath });
-    console.log(`✅ Ambiente carregado: ${envPath}`);
 }
 
 let browser: Browser;
 let context: BrowserContext;
 
-// Timeout global de 2 minutos para tolerar instabilidade de rede e Retry Pattern
+// Timeout global de 2 minutos
 setDefaultTimeout(120 * 1000);
 
 BeforeAll(async function () {
@@ -48,7 +47,6 @@ Before(async function (scenario) {
       world.label("suite", featureName);     
       world.label("subSuite", scenario.pickle.name); 
   }
-  // -------------------------------
 
   if (!process.env.BASE_URL) throw new Error("BASE_URL não definida!");
 
@@ -61,13 +59,11 @@ Before(async function (scenario) {
   const page = await context.newPage();
   this.page = page;
   this.pageManager = new PageManager(this.page);
-
-  // Conectamos a função 'attach' do Cucumber ao PageManager.
-  // Isso permite que o BasePage anexe o relatório de "Cura" do Self-Healing no Allure.
   this.pageManager.setAllureAttach(this.attach.bind(this));
 });
 
 After(async function (scenario) {
+  // 1. Tratamento de Falhas (Screenshots + IA)
   if (scenario.result?.status === Status.FAILED) {
     const startTime = Date.now();
     const errorMessage = scenario.result.message || "";
@@ -77,37 +73,42 @@ After(async function (scenario) {
             const screenshot = await this.page.screenshot({ fullPage: true, timeout: 5000 });
             this.attach(screenshot, 'image/png');
         } catch (e) {
-            console.warn("Não foi possível tirar screenshot (página travada?)");
+            console.warn("[Hook] Não foi possível tirar screenshot.");
         }
     }
 
-    // IA entra em ação se houver falha (RCA - Root Cause Analysis)
     if (process.env.AZURE_AI_TOKEN) {
-      if (!this.pageManager) return;
-      
-      try {
-        const aiService = this.pageManager.ai; 
+      if (this.pageManager) {
+        try {
+            const aiService = this.pageManager.ai; 
+            const cleanDom = await this.page.evaluate(() => {
+                return document.body ? document.body.innerHTML.substring(0, 20000) : "DOM Vazio";
+            }).catch(() => "Erro ao ler DOM");
 
-        const cleanDom = await this.page.evaluate(() => {
-            return document.body ? document.body.innerHTML.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gm, "").substring(0, 20000) : "DOM Vazio";
-        }).catch(() => "Erro ao ler DOM");
-
-        console.log(`[IA] ⏳ Analisando falha: ${scenario.pickle.name}...`);
-        
-        const analysis = await aiService.analyzeFailure(errorMessage, cleanDom as string);
-        this.attach(`IA Root Cause Analysis (RCA):\n\n${analysis}`, 'text/plain');
-        
-        console.log(`[IA] ✅ RCA concluída em ${((Date.now() - startTime) / 1000).toFixed(2)}s.`);
-      } catch (aiError: any) {
-        console.error(`[IA] ❌ Erro na análise: ${aiError.message}`);
+            const analysis = await aiService.analyzeFailure(errorMessage, cleanDom as string);
+            this.attach(`IA Root Cause Analysis (RCA):\n\n${analysis}`, 'text/plain');
+        } catch (aiError) {
+            console.error(`[IA] Falha ao executar análise: ${aiError}`);
+        }
       }
     }
   }
 
-  if (this.page) await this.page.close();
-  if (context) await context.close();
+  // 2. Limpeza Blindada (Onde o erro Exit 1 geralmente ocorre)
+  try {
+      if (this.page) await this.page.close();
+      if (context) await context.close();
+  } catch (e) {
+      // Ignora erro de fechamento se o teste já passou. 
+      // Isso evita falhar o CI por "Target closed" durante o teardown.
+      console.warn(`[Hook Warning] Erro ao fechar contexto: ${e}`);
+  }
 });
 
 AfterAll(async function () {
-  if (browser) await browser.close();
+  try {
+      if (browser) await browser.close();
+  } catch (e) {
+      console.warn(`[Hook Warning] Erro ao fechar navegador: ${e}`);
+  }
 });
