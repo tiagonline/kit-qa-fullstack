@@ -11,7 +11,7 @@ export let getFailRate = new Rate("_4_fail_rate");
 
 export default class getRequest {
   get() {
-    let res = http.get(`${BASE_URL}/get`); 
+    let res = http.get(`${BASE_URL}/get`);
 
     check(res, {
       "status is 200": (r) => r.status === 200,

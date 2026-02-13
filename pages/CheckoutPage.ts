@@ -29,10 +29,10 @@ export class CheckoutPage extends BasePage {
   }
 
   async validateErrorMessage(message: string) {
-    await this.page.waitForSelector(this.errorMessage, { state: 'visible' });
+    await this.page.waitForSelector(this.errorMessage, { state: "visible" });
     const text = await this.page.textContent(this.errorMessage);
     if (!text?.includes(message)) {
-        throw new Error(`Esperava erro "${message}", mas recebeu "${text}"`);
+      throw new Error(`Esperava erro "${message}", mas recebeu "${text}"`);
     }
   }
 
@@ -43,23 +43,23 @@ export class CheckoutPage extends BasePage {
     await this.page.fill(this.lastNameInput, lastName);
     await this.page.fill(this.zipInput, zip);
     await this.clickContinue();
-    
+
     // Espera ir para o Step Two (Overview)
     await this.page.waitForURL(/.*checkout-step-two\.html/);
-    await this.page.waitForSelector(this.finishButton, { state: 'visible' });
+    await this.page.waitForSelector(this.finishButton, { state: "visible" });
   }
 
   async clickFinish() {
     console.log("[Checkout] Finalizando compra...");
     await this.smartClick(this.finishButton, "Botão Finish");
-    
+
     // Espera ir para a tela de Complete
     await this.page.waitForURL(/.*checkout-complete\.html/);
   }
 
   async validateOrderSuccess(message: string) {
     console.log("[Checkout] Validando sucesso...");
-    await this.page.waitForSelector(this.completeHeader, { state: 'visible' });
+    await this.page.waitForSelector(this.completeHeader, { state: "visible" });
     await expect(this.page.locator(this.completeHeader)).toContainText(message);
   }
 }
