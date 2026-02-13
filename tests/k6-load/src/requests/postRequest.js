@@ -27,10 +27,10 @@ export default class postRequest {
       },
     });
 
-    let res = http.post(`${BASE_URL}/post`, body, params); 
+    let res = http.post(`${BASE_URL}/post`, body, params);
 
     check(res, {
-      "status is 200": (r) => r.status === 200, 
+      "status is 200": (r) => r.status === 200,
     });
 
     // Atualiza as métricas

@@ -1,15 +1,15 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 import { allure } from "allure-playwright";
-import { PageManager } from '../../pages/PageManager';
+import { PageManager } from "../../pages/PageManager";
 
-test.describe('Regressão Visual', () => {
+test.describe("Regressão Visual", () => {
   let pageManager: PageManager;
 
   test.beforeEach(async ({ page }) => {
     pageManager = new PageManager(page);
   });
 
-  test('Deve garantir o layout da Login Page', async ({ page }) => {
+  test("Deve garantir o layout da Login Page", async ({ page }) => {
     // 🏷️ METADADOS ALLURE
     allure.epic("Interface do Usuário (UI)");
     allure.feature("Autenticação");
@@ -19,12 +19,12 @@ test.describe('Regressão Visual', () => {
     allure.owner("Tiago Silva");
 
     await pageManager.login.navigate();
-    
+
     // Tira um print e compara com o "baseline" (imagem de referência)
-    await expect(page).toHaveScreenshot('login-page.png', { fullPage: true });
+    await expect(page).toHaveScreenshot("login-page.png", { fullPage: true });
   });
 
-  test('Deve garantir o layout do Inventário', async ({ page }) => {
+  test("Deve garantir o layout do Inventário", async ({ page }) => {
     // 🏷️ METADADOS ALLURE
     allure.epic("Interface do Usuário (UI)");
     allure.feature("Vitrine de Produtos");
@@ -34,9 +34,11 @@ test.describe('Regressão Visual', () => {
     allure.owner("Tiago Silva");
 
     await pageManager.login.navigate();
-    await pageManager.login.performLogin('standard_user', 'secret_sauce');
-    
+    await pageManager.login.performLogin("standard_user", "secret_sauce");
+
     await expect(page).toHaveURL(/.*inventory\.html/);
-    await expect(page).toHaveScreenshot('inventory-page.png', { fullPage: true });
+    await expect(page).toHaveScreenshot("inventory-page.png", {
+      fullPage: true,
+    });
   });
 });
