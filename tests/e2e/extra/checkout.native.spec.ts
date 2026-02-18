@@ -7,7 +7,7 @@ import * as dotenv from "dotenv";
 import { faker } from "@faker-js/faker";
 
 dotenv.config();
-test.describe.configure({ mode: 'serial' });
+test.describe.configure({ mode: "serial" });
 
 test.describe("E2E Nativo | Fluxo de Compra SAUCE LABS", () => {
   let loginPage: LoginPage;
@@ -23,7 +23,7 @@ test.describe("E2E Nativo | Fluxo de Compra SAUCE LABS", () => {
     inventoryPage = new InventoryPage(page);
     cartPage = new CartPage(page);
     checkoutPage = new CheckoutPage(page);
-    
+
     await loginPage.navigate();
   });
 
@@ -36,7 +36,9 @@ test.describe("E2E Nativo | Fluxo de Compra SAUCE LABS", () => {
     });
 
     await test.step("Então: Deve mostrar mensagem de erro", async () => {
-      await loginPage.validateErrorMessage("Epic sadface: Username and password do not match");
+      await loginPage.validateErrorMessage(
+        "Epic sadface: Username and password do not match",
+      );
     });
   });
 
@@ -77,7 +79,7 @@ test.describe("E2E Nativo | Fluxo de Compra SAUCE LABS", () => {
       await checkoutPage.fillInformation(
         faker.person.firstName(),
         faker.person.lastName(),
-        ""
+        "",
       );
     });
 

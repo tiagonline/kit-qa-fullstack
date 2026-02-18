@@ -20,13 +20,18 @@ export class CartPage extends BasePage {
   async proceedToCheckout() {
     console.log("[Cart] Indo para o Checkout...");
     await this.smartClick(this.checkoutButton, "Botão de Checkout");
-    
+
     // Espera a página de Step One carregar
     await this.page.waitForURL(/.*checkout-step-one\.html/);
-    await this.page.waitForSelector("#checkout_info_container", { state: 'visible' });
+    await this.page.waitForSelector("#checkout_info_container", {
+      state: "visible",
+    });
   }
 
   async continueShopping() {
-    await this.smartClick(this.continueShoppingButton, "Botão Continue Shopping");
+    await this.smartClick(
+      this.continueShoppingButton,
+      "Botão Continue Shopping",
+    );
   }
 }

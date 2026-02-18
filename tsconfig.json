@@ -5,7 +5,7 @@
     "lib": ["ES2023", "DOM"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    
+
     // Configurações de Path Mapping para imports limpos
     "baseUrl": ".",
     "paths": {

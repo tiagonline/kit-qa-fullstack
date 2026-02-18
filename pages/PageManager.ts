@@ -8,7 +8,7 @@ import { CheckoutPage } from "./CheckoutPage";
 export class PageManager {
   private readonly page: Page;
   private readonly _ai: AIService;
-  
+
   // Instâncias privadas para o Lazy Loading
   private loginPage?: LoginPage;
   private inventoryPage?: InventoryPage;
@@ -30,7 +30,7 @@ export class PageManager {
   // Recebe o 'attach' do Cucumber (do hooks.ts)
   public setAllureAttach(fn: (content: string, type: string) => void) {
     this.attachFn = fn;
-    
+
     // Se alguma página já tiver sido instanciada antes disso, atualiza ela
     if (this.loginPage) this.loginPage.setAttachFunction(fn);
     if (this.inventoryPage) this.inventoryPage.setAttachFunction(fn);

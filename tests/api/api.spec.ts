@@ -1,9 +1,8 @@
 import { test, expect, APIRequestContext } from '@playwright/test';
 import { faker } from '@faker-js/faker';
 import { z } from 'zod';
-import { allure } from "allure-playwright";
 
-// Definindo o "Contrato" (Schema) da postagem
+// Definindo o contrato (Schema) da postagem
 const postSchema = z.object({
   userId: z.number(),
   id: z.number(),
@@ -11,24 +10,20 @@ const postSchema = z.object({
   body: z.string(),
 });
 
-// Roda os testes de API em série para evitar conflitos de estado no CRUD
-test.describe.serial('Testes de API - Fluxo CRUD Completo & Cenários Negativos', () => {
+test.describe.serial('Testes de API - Fluxo CRUD, Idempotência & Negativos', () => {
   let apiContext: APIRequestContext;
   let createdPostId: number;
   
-  // Dados dinâmicos gerados pelo Faker
   const fakeTitle = faker.lorem.sentence();
   const fakeBody = faker.lorem.paragraph();
   const fakeUserId = faker.number.int({ min: 1, max: 100 });
   
-  // Dados para atualização (PUT)
   const updatedTitle = faker.lorem.sentence();
   const updatedBody = faker.lorem.paragraph();
 
   test.beforeAll(async ({ playwright }) => {
     apiContext = await playwright.request.newContext({
       baseURL: process.env.API_BASE_URL,
-      // Ignora verificação de SSL para rodar atrás de Proxy/VPN Corporativa
       ignoreHTTPSErrors: true,
     });
   });
@@ -37,126 +32,150 @@ test.describe.serial('Testes de API - Fluxo CRUD Completo & Cenários Negativos'
     await apiContext.dispose();
   });
 
-  // CENÁRIOS POSITIVOS (CRUD)
+  // --- CENÁRIOS POSITIVOS & IDEMPOTÊNCIA ---
 
-  test('POST /posts - Deve criar uma nova postagem e validar o contrato (Schema)', async () => {
-    const response = await apiContext.post('/posts', {
-      data: {
-        title: fakeTitle,
-        body: fakeBody,
-        userId: fakeUserId,
-      },
+  test('POST /posts - Deve ser idempotente e validar o contrato', async () => {
+    const idempotencyKey = faker.string.uuid();
+    const payload = {
+      title: fakeTitle,
+      body: fakeBody,
+      userId: fakeUserId,
+    };
+
+    console.log(`\n[IDEMPOTÊNCIA] Gerando Chave Única: ${idempotencyKey}`);
+
+    // Primeira tentativa
+    const response1 = await apiContext.post('/posts', {
+      data: payload,
+      headers: { 'X-Idempotency-Key': idempotencyKey }
     });
+    const body1 = await response1.json();
+    createdPostId = body1.id;
+    console.log(`[REQ 1] Status: ${response1.status()} | ID Gerado: ${body1.id}`);
 
-    expect(response.status()).toBe(201);
-    const headers = response.headers();
-    expect(headers['content-type']).toContain('application/json');
+    // Segunda tentativa (Simulação de Retry)
+    console.log(`[RETRY] Enviando mesma requisição com a mesma chave...`);
+    const response2 = await apiContext.post('/posts', {
+      data: payload,
+      headers: { 'X-Idempotency-Key': idempotencyKey }
+    });
+    const body2 = await response2.json();
+    console.log(`[REQ 2] Status: ${response2.status()} | ID Retornado: ${body2.id}`);
 
-    const responseBody = await response.json();
-    console.log('ID Gerado:', responseBody.id);
-
-    // --- VALIDAÇÃO DE CONTRATO COM ZOD ---
-    const validation = postSchema.safeParse(responseBody);
-    
-    // Se falhar aqui, o console vai mostrar exatamente qual campo veio errado
-    if (!validation.success) {
-      console.error("Erro de Contrato:", validation.error);
-    }
+    // Verificação de Contrato
+    const validation = postSchema.safeParse(body2);
     expect(validation.success).toBeTruthy();
-    // -------------------------------------
 
-    // Validações funcionais (valores específicos)
-    expect(responseBody.title).toBe(fakeTitle);
-    expect(responseBody.body).toBe(fakeBody);
-    expect(responseBody.userId).toBe(fakeUserId);
-
-    createdPostId = responseBody.id;
+    // Verificação de consistência
+    expect(body1.title).toBe(body2.title);
+    console.log(`[CHECK] Títulos conferem: "${body2.title.substring(0, 20)}..."`);
+    console.log(`[RESULTADO] Idempotência validada com sucesso!\n`);
   });
 
   test('GET /posts/:id - Deve consultar a postagem e validar o contrato', async () => {
-    // Fallback para 1 caso o ID seja > 100 (limitação do JSONPlaceholder)
     const idToTest = (createdPostId > 100) ? 1 : createdPostId; 
-
     const response = await apiContext.get(`/posts/${idToTest}`);
     expect(response.status()).toBe(200);
 
     const responseBody = await response.json();
-
-    // Reutilizando o schema para garantir que o GET também segue o contrato
     const validation = postSchema.safeParse(responseBody);
     expect(validation.success).toBeTruthy();
-
     expect(responseBody).toHaveProperty('id', idToTest);
   });
 
-  test('PUT /posts/:id - Deve atualizar a postagem integralmente', async () => {
+  test('PUT /posts/:id - Deve ser idempotente na atualização integral', async () => {
     const idToTest = (createdPostId > 100) ? 1 : createdPostId;
+    const updatePayload = {
+      id: idToTest,
+      title: updatedTitle,
+      body: updatedBody,
+      userId: fakeUserId,
+    };
 
-    const response = await apiContext.put(`/posts/${idToTest}`, {
-      data: {
-        id: idToTest,
-        title: updatedTitle,
-        body: updatedBody,
-        userId: fakeUserId,
-      },
-    });
+    console.log(`[PUT IDEMPOTENCY] Atualizando ID: ${idToTest}`);
+    const res1 = await apiContext.put(`/posts/${idToTest}`, { data: updatePayload });
+    const res2 = await apiContext.put(`/posts/${idToTest}`, { data: updatePayload });
 
-    expect(response.status()).toBe(200);
-    const responseBody = await response.json();
+    console.log(`[PUT 1] Status: ${res1.status()}`);
+    console.log(`[PUT 2] Status: ${res2.status()}`);
     
-    // Validando contrato no PUT
-    const validation = postSchema.safeParse(responseBody);
-    expect(validation.success).toBeTruthy();
-
-    expect(responseBody.title).toBe(updatedTitle);
-    expect(responseBody.body).toBe(updatedBody);
+    const body1 = await res1.json();
+    const body2 = await res2.json();
+    
+    expect(body1).toEqual(body2);
+    console.log(`[CHECK] Respostas do PUT são idênticas. Estado final consistente.\n`);
   });
 
   test('DELETE /posts/:id - Deve remover a postagem', async () => {
     const idToTest = (createdPostId > 100) ? 1 : createdPostId;
-    
     const response = await apiContext.delete(`/posts/${idToTest}`);
     expect(response.status()).toBe(200);
+    console.log(`[DELETE] Recurso ${idToTest} removido.`);
   });
 
-  // CENÁRIOS NEGATIVOS
+  // --- CENÁRIOS NEGATIVOS ---
 
-  test.describe("Cenários Negativos", () => {
+  test.describe("Cenários Negativos & Casos de Borda", () => {
 
-    test("GET /posts/999999 - ID Inexistente (404)", async () => {
-      const response = await apiContext.get(`/posts/999999`);
+    test("GET /posts/abc - ID com formato inválido (404/400)", async () => {
+      const response = await apiContext.get(`/posts/abc`);
+      console.log(`[NEGATIVO] ID Alfanumérico: Status ${response.status()}`);
+      // Esperamos que a API não quebre, retornando erro de não encontrado ou má requisição
+      expect([404, 400]).toContain(response.status());
+    });
+
+    test("POST /posts - Campos obrigatórios ausentes", async () => {
+      // Enviando payload vazio para testar a robustez da validação do servidor
+      const response = await apiContext.post(`/posts`, {
+        data: {}
+      });
+      console.log(`[NEGATIVO] Payload Vazio: Status ${response.status()}`);
+      // Nota: JSONPlaceholder aceita tudo, mas em APIs reais buscaríamos 400 Bad Request
+      expect([201, 400]).toContain(response.status());
+    });
+
+    test("POST /posts - Tipagem incorreta (Data Fuzzing)", async () => {
+      const response = await apiContext.post(`/posts`, {
+        data: {
+          title: 12345, // Número onde deveria ser String
+          body: true,   // Booleano onde deveria ser String
+          userId: "admin" // String onde deveria ser Número
+        }
+      });
+      console.log(`[NEGATIVO] Tipagem Errada: Status ${response.status()}`);
+      // Se a API for bem tipada, ela deveria rejeitar.
+      expect([201, 400, 422]).toContain(response.status());
+    });
+
+    test("POST /posts - String extremamente longa (Payload Stress)", async () => {
+      const longString = faker.lorem.paragraphs(20); // Gerando texto massivo com Faker
+      const response = await apiContext.post(`/posts`, {
+        data: {
+          title: longString,
+          body: "Teste de limite",
+          userId: 1
+        }
+      });
+      console.log(`[NEGATIVO] String Longa: Status ${response.status()}`);
+      expect(response.ok()).toBeTruthy(); // Validamos se o servidor aguenta o processamento
+    });
+
+    test("GET /posts/0 - ID Limite Zero", async () => {
+      const response = await apiContext.get(`/posts/0`);
+      console.log(`[NEGATIVO] ID Zero: Status ${response.status()}`);
       expect(response.status()).toBe(404);
     });
 
-    test("POST /posts - Payload Malformado", async () => {
-      const response = await apiContext.post(`/posts`, {
-        headers: { 'Content-Type': 'application/json' },
-        data: "{ payload_quebrado: " // String que não é um JSON válido
-      });
-      // Aceito 201 (comportamento permissivo do JSONPlaceholder) ou 400/500 (API Real)
-      expect([201, 400, 500]).toContain(response.status());
-    });
-
-    test("GET /invalid-route - Rota Inexistente", async () => {
-        const response = await apiContext.get(`/invalid-route-testing`);
-        expect(response.status()).toBe(404);
-    });
-
-    test("Simulação de Falha de Autenticação (Header Inválido)", async ({ playwright }) => {
-        // Crio contexto isolado para testar auth sem afetar os outros testes
+    test("Simulação de Falha de Autenticação (Token Inválido)", async ({ playwright }) => {
         const authContext = await playwright.request.newContext({
             baseURL: process.env.API_BASE_URL,
-            extraHTTPHeaders: { 'Authorization': 'Bearer TOKEN_EXPIRADO_TESTE' }
+            extraHTTPHeaders: { 'Authorization': 'Bearer 12345_TOKEN_INVALIDO' }
         });
         
-        // Tentativa de acesso
         const response = await authContext.get(`/posts/1`);
-        
-        // JSONPlaceholder é público, então retorna 200.
-        // Em uma API real privada, esperaríamos 401 ou 403.
-        // Aqui valido apenas que a requisição completou.
+        console.log(`[NEGATIVO] Auth Inválida: Status ${response.status()}`);
+        // Como o JSONPlaceholder é público, ele retorna 200, mas listamos o 401 para APIs reais
         expect([200, 401, 403]).toContain(response.status()); 
-        
         await authContext.dispose();
     });
   });

@@ -45,14 +45,16 @@
 O projeto utiliza uma arquitetura modular baseada em **TypeScript**, focada em escalabilidade e facilidade de manutenção.
 
 ### 1.1 Tecnologias e Versões
-* **Linguagem:** TypeScript / JavaScript (Node.js v18+)
-* **E2E & Mobile:** [Playwright v1.40+](https://playwright.dev/)
-* **BDD:** [CucumberJS v10+](https://github.com/cucumber/cucumber-js)
-* **Performance:** [K6](https://k6.io/) com InfluxDB e Grafana via Docker.
-* **CI/CD:** GitHub Actions.
-* **Auto Healing & RCA:** Mecanismo de autocura e Análise de Causa Raiz assistido por IA, integrando o framework ao **GitHub Models (GPT-4o)** para garantir a resiliência de seletores e diagnósticos automáticos de falhas.
+
+- **Linguagem:** TypeScript / JavaScript (Node.js v18+)
+- **E2E & Mobile:** [Playwright v1.40+](https://playwright.dev/)
+- **BDD:** [CucumberJS v10+](https://github.com/cucumber/cucumber-js)
+- **Performance:** [K6](https://k6.io/) com InfluxDB e Grafana via Docker.
+- **CI/CD:** GitHub Actions.
+- **Auto Healing & RCA:** Mecanismo de autocura e Análise de Causa Raiz assistido por IA, integrando o framework ao **GitHub Models (GPT-4o)** para garantir a resiliência de seletores e diagnósticos automáticos de falhas.
 
 ### 1.2 Estrutura de Pastas
+
 ```text
 kit-qa-fullstack/
 ├── .github/workflows/     # Pipeline de CI/CD (GitHub Actions com Jobs Paralelos)
@@ -87,23 +89,26 @@ kit-qa-fullstack/
 
 Para executar este projeto localmente, necessitas de:
 
-1. **Node.js** (v18 ou superior)  
+1. **Node.js** (v18 ou superior)
 2. **Docker** (para os testes de carga com monitorização)
 
-#### **Dica**: Para rodar os testes de carga sem problemas de permissão no Linux, garanta que seu usuário esteja no grupo do docker: 
-```bash 
+#### **Dica**: Para rodar os testes de carga sem problemas de permissão no Linux, garanta que seu usuário esteja no grupo do docker:
+
+```bash
 sudo usermod -aG docker $USER && newgrp docker
 ```
 
 ### 2.1 Instalação
 
 #### 2.1.1 Clonar o repositório:
+
 ```bash
 git clone https://github.com/tiagonline/kit-qa-fullstack.git
 cd kit-qa-fullstack
 ```
 
 #### 2.1.2 Instalar dependências:
+
 ```bash
 npm install
 npx playwright install --with-deps
@@ -166,17 +171,17 @@ Este comando executa os testes comparando a tela atual com os "baselines" aprova
 
 ## 4. Como Executar os Testes
 
-| Cenário                 | Comando                     |
-|-------------------------|-----------------------------|
-| Executar Tudo (CI)      | `npm run test:all`          |
-| Testes de API           | `npm run test:api`          |
-| Testes Web (BDD)        | `npm run test:e2e`          |
-| Testes Mobile           | `npm run test:mobile`       |
-| Teste de Performance    | `npm run k6:run`            |
-| Modo Playwright         | `npx playwright test --ui`  |
-| Teste de Acessibilidade | `npm run test:a11y`         |
-| Regressão Visual        | `npm run test:visual`       |
-| Atualiza a base de imgs | `npm run test:visual:update`|
+| Cenário                 | Comando                      |
+| ----------------------- | ---------------------------- |
+| Executar Tudo (CI)      | `npm run test:all`           |
+| Testes de API           | `npm run test:api`           |
+| Testes Web (BDD)        | `npm run test:e2e`           |
+| Testes Mobile           | `npm run test:mobile`        |
+| Teste de Performance    | `npm run k6:run`             |
+| Modo Playwright         | `npx playwright test --ui`   |
+| Teste de Acessibilidade | `npm run test:a11y`          |
+| Regressão Visual        | `npm run test:visual`        |
+| Atualiza a base de imgs | `npm run test:visual:update` |
 
 ---
 
@@ -190,32 +195,31 @@ O projeto está configurado para gerar evidências detalhadas tanto em ambiente 
 
 Após rodar os testes na sua máquina, os relatórios podem ser encontrados nos seguintes locais:
 
-- **API & Mobile (Playwright):**  
-  - Local: `playwright-report/index.html`  
+- **API & Mobile (Playwright):**
+  - Local: `playwright-report/index.html`
   - Para abrir: `npx playwright show-report`
 
-- **E2E (Cucumber):**  
+- **E2E (Cucumber):**
   - Local: `cucumber-report.html` (abrir diretamente no navegador)
 
-- **Performance (k6):**  
+- **Performance (k6):**
   - Local: `k6-summary.json` (resumo técnico) ou veja a execução em tempo real no [Grafana](http://localhost:3000/d/fullstack-load-test) enquanto estiver executando. Configurei para abrir o dash automaticamente quando for executado.
 
 ---
 
 ### 5.2 Execução no CI/CD (GitHub Actions)
 
-Devido a execução dos **Jobs Paralelos**, o GitHub Actions gera arquivos separados para cada especialidade. 
+Devido a execução dos **Jobs Paralelos**, o GitHub Actions gera arquivos separados para cada especialidade.
 Para visualizá-los:
 
-1. Abra à aba **Actions** no repositório.  
-2. Clique no **workflow** executado (ex: `workflow-pipeline`).  
+1. Abra à aba **Actions** no repositório.
+2. Clique no **workflow** executado (ex: `workflow-pipeline`).
 3. No final da página, na seção **Artifacts**, encontrará os seguintes pacotes:
+   - **api-report:** Relatórios de status e payloads da API.
+   - **cucumber-report:** Fluxos BDD com as regras de negócio.
+   - **mobile-report:** Evidências de responsividade mobile.
+   - **k6-report:** Métricas de performance e carga.
 
-   -  **api-report:** Relatórios de status e payloads da API.  
-   -  **cucumber-report:** Fluxos BDD com as regras de negócio.  
-   -  **mobile-report:** Evidências de responsividade mobile.  
-   -  **k6-report:** Métricas de performance e carga.
-   
 > **Nota:** Todos os relatórios HTML podem ser visualizados descompactando o `.zip` e abrindo o `.html` pelo navegador.
 
 ---
@@ -226,21 +230,21 @@ O teste de carga foi executado utilizando **k6** e conteinerização com **Docke
 
 ### 6.1 Resumo da Execução
 
-| Métrica                 | Resultado Obtido | Status                       |
-|--------------------------|------------------|------------------------------|
-| Usuários Simultâneos     | 500 VUs          | ✅ Sucesso                   |
-| Taxa de Sucesso (Checks) | 99.79%           | ✅ Sucesso                   |
-| Tempo de Resposta (P95)  | 990ms            | ✅ Dentro do Limite (< 2s)   |
-| Requisições Falhas       | 0.41%            | ✅ Dentro do Limite (< 5%)   |
-| Total de Requisições     | 207.186          | ⚡ Alta Vazão                |
+| Métrica                  | Resultado Obtido | Status                     |
+| ------------------------ | ---------------- | -------------------------- |
+| Usuários Simultâneos     | 500 VUs          | ✅ Sucesso                 |
+| Taxa de Sucesso (Checks) | 99.79%           | ✅ Sucesso                 |
+| Tempo de Resposta (P95)  | 990ms            | ✅ Dentro do Limite (< 2s) |
+| Requisições Falhas       | 0.41%            | ✅ Dentro do Limite (< 5%) |
+| Total de Requisições     | 207.186          | ⚡ Alta Vazão              |
 
 ### 6.2 Infraestrutura de Monitoramento
 
 A solução foi implementada com uma stack de observabilidade completa:
 
-- **k6:** Motor de execução dos testes.  
-- **InfluxDB:** Armazenamento de métricas em tempo real.  
-- **Grafana:** Dashboard para visualização de tendências e gargalos.  
+- **k6:** Motor de execução dos testes.
+- **InfluxDB:** Armazenamento de métricas em tempo real.
+- **Grafana:** Dashboard para visualização de tendências e gargalos.
 
 ### 6.3 Insights Técnicos e Identificação de Gargalos
 
@@ -258,9 +262,9 @@ A solução foi implementada com uma stack de observabilidade completa:
 
 Este projeto foi desenvolvido seguindo padrões de mercado para **produção**:
 
-- **Page Object Model (POM):** Separação clara entre lógica de teste e seletores.  
-- **Continuous Integration:** Pipeline automatizado que valida cada alteração.  
-- **Observabilidade:** Monitorização de performance com dashboards profissionais com **Grafana**.  
+- **Page Object Model (POM):** Separação clara entre lógica de teste e seletores.
+- **Continuous Integration:** Pipeline automatizado que valida cada alteração.
+- **Observabilidade:** Monitorização de performance com dashboards profissionais com **Grafana**.
 - **Segurança:** Uso de **Secrets** para gestão de tokens e dados sensíveis.
 
 ### 7.1 Padrões de Projeto & Arquitetura
@@ -330,37 +334,42 @@ Como iniciativa de melhoria contínua e foco na experiência de **todos** os usu
 A solução utiliza a engine do **axe-core** integrada nativamente aos testes do Playwright, permitindo "auditorias" rápidas durante a execução da pipeline.
 
 ### 10.1 Cobertura da Automação
+
 O teste varre o DOM da aplicação em busca de violações das diretrizes internacionais **WCAG 2.1 (Web Content Accessibility Guidelines)**, cobrindo:
 
-* ✅ Contraste de cores (Nível AA).
-* ✅ Hierarquia de cabeçalhos.
-* ✅ Rótulos de formulários (Labels).
-* ✅ Textos alternativos em imagens (Alt text).
-* ✅ Semântica ARIA.
+- ✅ Contraste de cores (Nível AA).
+- ✅ Hierarquia de cabeçalhos.
+- ✅ Rótulos de formulários (Labels).
+- ✅ Textos alternativos em imagens (Alt text).
+- ✅ Semântica ARIA.
 
 ### 10.2 Benefícios para o Projeto
-* **Inclusão:** Garante que o produto seja utilizável por pessoas com deficiência.
-* **SEO:** Melhorias de acessibilidade impactam diretamente o rankeamento em motores de busca.
-* **Prevenção:** Detecta cerca de 50% dos erros mais comuns de acessibilidade antes de chegar em produção.
+
+- **Inclusão:** Garante que o produto seja utilizável por pessoas com deficiência.
+- **SEO:** Melhorias de acessibilidade impactam diretamente o rankeamento em motores de busca.
+- **Prevenção:** Detecta cerca de 50% dos erros mais comuns de acessibilidade antes de chegar em produção.
 
 ## 11. IA com Auto Healing
 
-* **Observabilidade Assistida:** Eu não uso a IA para escrever testes, mas para explicar falhas, reduzindo o tempo de depuração de horas para segundos.
+- **Observabilidade Assistida:** Eu não uso a IA para escrever testes, mas para explicar falhas, reduzindo o tempo de depuração de horas para segundos.
 
-* **Abstração BasePage:** Eu centralizei a inteligência em uma classe pai, garantindo que o código das páginas permaneça limpo e reutilizável.
+- **Abstração BasePage:** Eu centralizei a inteligência em uma classe pai, garantindo que o código das páginas permaneça limpo e reutilizável.
 
-* **Segurança de Tokens:** Eu validei que o acesso é feito via PAT Classic com escopos mínimos, injetado via segredos do GitHub Actions, eliminando qualquer risco de vazamento de credenciais.
+- **Segurança de Tokens:** Eu validei que o acesso é feito via PAT Classic com escopos mínimos, injetado via segredos do GitHub Actions, eliminando qualquer risco de vazamento de credenciais.
 
-* Implementei uma camada de Observabilidade Inteligente que utiliza o GitHub Models (GPT-4o) para realizar Análise de Causa Raiz (RCA) automática em caso de falhas. Para garantir a resiliência do pipeline em ambientes corporativos/VPNs **sem desativar a validação de certificados SSL**, ajustei a cadeia de certificados/proxy corporativo e utilizei um agente HTTPS configurado corretamente, evitando o uso de `NODE_TLS_REJECT_UNAUTHORIZED = '0'` ou qualquer forma de *bypass* de certificados.
+- Implementei uma camada de Observabilidade Inteligente que utiliza o GitHub Models (GPT-4o) para realizar Análise de Causa Raiz (RCA) automática em caso de falhas. Para garantir a resiliência do pipeline em ambientes corporativos/VPNs **sem desativar a validação de certificados SSL**, ajustei a cadeia de certificados/proxy corporativo e utilizei um agente HTTPS configurado corretamente, evitando o uso de `NODE_TLS_REJECT_UNAUTHORIZED = '0'` ou qualquer forma de _bypass_ de certificados.
 
 ### 11.1 IA com Auto Healing & RCA (Diferencial Técnico)
-* Este framework implementa o conceito de Observabilidade Inteligente, utilizando a API do GitHub Models para reduzir drasticamente o custo de manutenção de testes.
+
+- Este framework implementa o conceito de Observabilidade Inteligente, utilizando a API do GitHub Models para reduzir drasticamente o custo de manutenção de testes.
 
 ### 11.2 Auto Healing (Autocura)
-* Através do método smartClick na BasePages.ts, o framework detecta quando um seletor falhou devido a mudanças de UI. Em tempo real, o DOM é enviado para o GPT-4o, que sugere o novo seletor funcional e permite que o teste continue sem intervenção humana manual inmediata.
+
+- Através do método smartClick na BasePages.ts, o framework detecta quando um seletor falhou devido a mudanças de UI. Em tempo real, o DOM é enviado para o GPT-4o, que sugere o novo seletor funcional e permite que o teste continue sem intervenção humana manual inmediata.
 
 ## 11.3 Análise de Causa Raiz (RCA) Automática
-* Sempre que um cenário falha no CI/CD, o sistema dispara uma análise de RCA. A IA interpreta o erro técnico e anexa uma explicação legível ao relatório (ex: "O teste falhou porque o botão 'Checkout' foi sobreposto por um banner publicitário"), poupando horas de depuração.
+
+- Sempre que um cenário falha no CI/CD, o sistema dispara uma análise de RCA. A IA interpreta o erro técnico e anexa uma explicação legível ao relatório (ex: "O teste falhou porque o botão 'Checkout' foi sobreposto por um banner publicitário"), poupando horas de depuração.
 
 ---
 

@@ -4,7 +4,10 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 module.exports = {
   mode: "production",
   entry: {
-    fullstack: path.resolve(__dirname, "./src/simulations/loadPerformanceFullstack.test.js"),
+    fullstack: path.resolve(
+      __dirname,
+      "./src/simulations/loadPerformanceFullstack.test.js",
+    ),
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -34,10 +37,8 @@ module.exports = {
     ],
   },
   target: "web",
-  externals: /^(k6|https?\:\/\/)(\/.*)?/, 
-  plugins: [
-    new CleanWebpackPlugin(),
-  ],
+  externals: /^(k6|https?\:\/\/)(\/.*)?/,
+  plugins: [new CleanWebpackPlugin()],
   stats: {
     colors: true,
   },
